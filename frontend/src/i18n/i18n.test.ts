@@ -34,3 +34,42 @@ describe('translations', () => {
     expect(localStorage.getItem('qisma.lang')).toBe('fr')
   })
 })
+
+describe('adoptPreferredLanguage: the language of the account, for a device that never chose one', () => {
+  it('applies the language of the account when this device has no choice', async () => {
+    const { adoptPreferredLanguage } = await import('./index')
+    localStorage.clear()
+
+    adoptPreferredLanguage('FR')
+
+    expect(i18n.language).toBe('fr')
+  })
+
+  it('never overrides a language this device chose', async () => {
+    const { adoptPreferredLanguage } = await import('./index')
+    localStorage.setItem('qisma.lang', 'en')
+
+    adoptPreferredLanguage('AR')
+
+    expect(i18n.language).toBe('en')
+  })
+
+  it('does not remember it as a device choice, so a later change of the account language is followed', async () => {
+    const { adoptPreferredLanguage } = await import('./index')
+    localStorage.clear()
+
+    adoptPreferredLanguage('FR')
+
+    expect(localStorage.getItem('qisma.lang')).toBeNull()
+  })
+
+  it('ignores a language the app does not know', async () => {
+    const { adoptPreferredLanguage } = await import('./index')
+    localStorage.clear()
+
+    adoptPreferredLanguage('XX')
+    adoptPreferredLanguage('')
+
+    expect(i18n.language).toBe('en')
+  })
+})

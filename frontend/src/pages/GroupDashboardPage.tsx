@@ -32,7 +32,7 @@ export function GroupDashboardPage() {
   const money = (minor: number) => tooltipAmount(minor, group.currency, language)
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 pt-6">
       <QueryBoundary query={summary}>
         {(s) => (
           <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

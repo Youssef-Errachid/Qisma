@@ -37,6 +37,28 @@ void i18n.use(initReactI18next).init({
 i18n.on('languageChanged', applyToDocument)
 applyToDocument(i18n.language)
 
+/**
+ * The language saved in the account, used when this device has no language chosen yet. A choice made on this device
+ * (with the switcher, or when saving the profile) always wins: the account only fills in for a device that never chose.
+ * Not remembered on the device, so a later change of the account language is followed too.
+ */
+export function adoptPreferredLanguage(preferred: string): void {
+  const language = preferred.toLowerCase()
+  if (!isAppLanguage(language)) {
+    return
+  }
+  try {
+    if (isAppLanguage(localStorage.getItem(STORAGE_KEY))) {
+      return
+    }
+  } catch {
+    // storage unavailable: nothing was chosen that we could know of, so the account language applies
+  }
+  if (i18n.language !== language) {
+    void i18n.changeLanguage(language)
+  }
+}
+
 /** The user's explicit choice is remembered on this device (a language is not sensitive data). */
 export function setLanguage(language: AppLanguage): void {
   try {

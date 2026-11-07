@@ -26,6 +26,9 @@ export function GroupTabs({ showSettings = false }: { showSettings?: boolean }) 
       <NavLink to="members" className={tabClass}>
         {t('tabs.members')}
       </NavLink>
+      <NavLink to="activity" className={tabClass}>
+        {t('tabs.activity')}
+      </NavLink>
       {showSettings && (
         <NavLink to="settings" className={tabClass}>
           {t('tabs.settings')}

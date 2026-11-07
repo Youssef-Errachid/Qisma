@@ -11,12 +11,15 @@ interface ChartCardProps {
 
 export function ChartCard({ title, description, columns, rows, children }: ChartCardProps) {
   return (
-    <figure className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+    <figure className="flex h-full flex-col rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
       <figcaption className="mb-4">
         <h2 className="text-base font-semibold text-slate-900">{title}</h2>
         {description && <p className="mt-0.5 text-sm text-slate-500">{description}</p>}
       </figcaption>
-      <div aria-hidden="true">{children}</div>
+      {/* two cards side by side are as tall as the taller one: the picture sits in the middle, not stuck to the top */}
+      <div aria-hidden="true" className="flex flex-1 items-center">
+        <div className="w-full min-w-0">{children}</div>
+      </div>
       {/* hidden from the eye, read by screen readers. The box is hidden, not the table: a hidden <table> still shows its <caption> */}
       <div className="sr-only">
       <table>

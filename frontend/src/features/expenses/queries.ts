@@ -1,4 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { activityKeys } from '@/features/activity/queries'
 import { balanceKeys } from '@/features/balances/keys'
 import { reportKeys } from '@/features/reports/queries'
 import { settlementKeys } from '@/features/settlements/keys'
@@ -36,6 +37,7 @@ export function useInvalidateMoney(groupId: string) {
       queryClient.invalidateQueries({ queryKey: reportKeys.group(groupId) }),
       queryClient.invalidateQueries({ queryKey: balanceKeys.group(groupId) }),
       queryClient.invalidateQueries({ queryKey: settlementKeys.group(groupId) }),
+      queryClient.invalidateQueries({ queryKey: activityKeys.group(groupId) }),
     ])
 }
 

@@ -17,7 +17,7 @@ interface LoginLocationState {
 
 export function LoginPage() {
   const { t } = useTranslation()
-  const { login } = useAuth()
+  const { login, notice } = useAuth()
   const location = useLocation()
   const justRegistered = (location.state as LoginLocationState | null)?.registered === true
 
@@ -38,6 +38,7 @@ export function LoginPage() {
       </div>
 
       {justRegistered && <Alert variant="success">{t('auth.login.registered')}</Alert>}
+      {notice === 'passwordChanged' && <Alert variant="success">{t('auth.login.passwordChanged')}</Alert>}
       {signIn.isError && <Alert variant="error">{errorMessage(t, signIn.error)}</Alert>}
 
       <form onSubmit={handleSubmit((values) => signIn.mutate(values))} noValidate className="space-y-4">

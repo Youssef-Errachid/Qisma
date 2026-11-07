@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api/client'
 import type { GroupResponse } from '@/types/api'
+import { activityKeys } from '@/features/activity/queries'
 import { groupKeys } from './queries'
 
 export interface UpdateGroupRequest {
@@ -28,6 +29,7 @@ export function useUpdateGroup(groupId: string) {
     mutationFn: (request: UpdateGroupRequest) => updateGroup(groupId, request),
     onSuccess: (group) => {
       queryClient.setQueryData(groupKeys.detail(groupId), group)
+      void queryClient.invalidateQueries({ queryKey: activityKeys.group(groupId) })
       return queryClient.invalidateQueries({ queryKey: groupKeys.list() })
     },
   })
@@ -38,6 +40,6 @@ export function useArchiveGroup(groupId: string) {
   return useMutation({
     mutationFn: () => archiveGroup(groupId),
     // the group is read again, and now says ARCHIVED: every screen of it follows
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: groupKeys.all }),
+    onSuccess: () => Promise.all([queryClient.invalidateQueries({ queryKey: groupKeys.all }), queryClient.invalidateQueries({ queryKey: activityKeys.group(groupId) })]),
   })
 }

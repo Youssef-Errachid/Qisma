@@ -17,17 +17,20 @@ export function AppLayout() {
   return (
     <div className="min-h-screen">
       <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
-          <div className="flex items-center gap-6">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-3">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-1">
             <Link to="/groups" className="text-xl font-bold tracking-tight text-brand">
               {t('app.name')}
             </Link>
-            <nav aria-label={t('nav.main')} className="hidden items-center gap-4 text-sm font-medium text-slate-600 sm:flex">
+            <nav aria-label={t('nav.main')} className="flex items-center gap-4 text-sm font-medium text-slate-600">
               <NavLink to="/groups" end className={navClass}>
                 {t('nav.groups')}
               </NavLink>
               <NavLink to="/join" className={navClass}>
                 {t('nav.join')}
+              </NavLink>
+              <NavLink to="/account" className={navClass}>
+                {t('nav.account')}
               </NavLink>
             </nav>
           </div>

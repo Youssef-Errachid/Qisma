@@ -306,6 +306,17 @@ export interface InvitationCreated {
   expiresAt: string | null
 }
 
+export interface UpdateProfileRequest {
+  fullName: string
+  preferredLanguage: Language
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string
+  newPassword: string
+  confirmNewPassword: string
+}
+
 export interface LoginRequest {
   email: string
   password: string

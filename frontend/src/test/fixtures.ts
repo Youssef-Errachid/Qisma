@@ -10,7 +10,7 @@ export const youssef: UserResponse = {
   fullName: 'Youssef Errachid',
   email: 'youssef@test.com',
   profileImage: null,
-  preferredLanguage: 'FR',
+  preferredLanguage: 'EN',
   createdAt: '2026-11-01T10:00:00Z',
 }
 
@@ -106,6 +106,13 @@ export function pageOf<T>(items: T[], overrides: Partial<PageResponse<T>> = {}):
 
 export function expensesAre(groupId: string, page: PageResponse<ExpenseResponse>) {
   server.use(http.get(`${API}/groups/${groupId}/expenses`, () => HttpResponse.json(page)))
+}
+
+export function activityLine(overrides: Partial<ActivityLine> = {}): ActivityLine {
+  return {
+    id: 'a1', action: 'EXPENSE_CREATED', entityType: 'EXPENSE', entityId: 'e1', actorId: 'u-youssef', actorUsername: 'youssef',
+    createdAt: '2026-11-03T18:00:00Z', oldValue: null, newValue: { amountMinor: 30000 }, ...overrides,
+  }
 }
 
 export function activityIs(groupId: string, lines: ActivityLine[]) {

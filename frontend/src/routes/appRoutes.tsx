@@ -3,6 +3,8 @@ import { AppLayout } from '@/components/layout/AppLayout'
 import { AuthLayout } from '@/components/layout/AuthLayout'
 import { GroupLayout } from '@/components/layout/GroupLayout'
 import { CreateGroupPage } from '@/pages/CreateGroupPage'
+import { AccountPage } from '@/pages/AccountPage'
+import { ActivityPage } from '@/pages/ActivityPage'
 import { BalancesPage } from '@/pages/BalancesPage'
 import { ExpenseDetailPage } from '@/pages/ExpenseDetailPage'
 import { ExpenseFormPage } from '@/pages/ExpenseFormPage'
@@ -52,8 +54,10 @@ export const appRoutes: RouteObject[] = [
               { path: 'settlements', element: <SettlementsPage /> },
               { path: 'settlements/new', element: <NewSettlementPage /> },
               { path: 'members', element: <MembersPage /> },
+              { path: 'activity', element: <ActivityPage /> },
               { path: 'settings', element: <GroupSettingsPage /> },
             ] },
+          { path: '/account', element: <AccountPage /> },
           { path: '/join', element: <JoinGroupPage /> },
           { path: '/join/:secret', element: <JoinGroupPage /> },
         ],
