@@ -84,7 +84,7 @@ export function InvitationsSection({ groupId }: { groupId: string }) {
           <div className="flex flex-wrap gap-3">
             {(['CODE', 'LINK'] as const).map((option) => (
               <label key={option} className={`flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm ring-1 ring-inset ${type === option ? 'bg-credit-soft text-credit ring-emerald-300' : 'text-slate-700 ring-slate-300 hover:bg-slate-50'}`}>
-                <input type="radio" name="invitationType" value={option} checked={type === option} onChange={() => setType(option)} className="text-brand focus:ring-brand" />
+                <input type="radio" name="invitationType" value={option} checked={type === option} onChange={() => setType(option)} className="accent-brand focus:ring-brand" />
                 {t(`invitations.type.${option}`)}
               </label>
             ))}

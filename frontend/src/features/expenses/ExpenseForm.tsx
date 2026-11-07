@@ -187,7 +187,7 @@ export function ExpenseForm({ group, members, everyone, userId, expense }: Expen
         <div className="flex flex-wrap gap-3">
           {SPLIT_METHODS.map((option) => (
             <label key={option} className={`flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm ring-1 ring-inset ${method === option ? 'bg-credit-soft text-credit ring-emerald-300' : 'text-slate-700 ring-slate-300 hover:bg-slate-50'}`}>
-              <input type="radio" name="splitMethod" value={option} checked={method === option} onChange={() => chooseMethod(option)} className="text-brand focus:ring-brand" />
+              <input type="radio" name="splitMethod" value={option} checked={method === option} onChange={() => chooseMethod(option)} className="accent-brand focus:ring-brand" />
               {t(`expenseForm.split.${option}`)}
             </label>
           ))}

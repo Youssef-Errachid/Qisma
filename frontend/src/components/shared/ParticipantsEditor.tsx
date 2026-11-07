@@ -48,7 +48,7 @@ export function ParticipantsEditor({ members, method, drafts, plan, currency, sh
                   type="checkbox"
                   checked={draft.selected}
                   onChange={(event) => onDraft(member.userId, { selected: event.target.checked })}
-                  className="h-4 w-4 rounded border-slate-300 text-brand focus:ring-brand"
+                  className="h-4 w-4 rounded border-slate-300 accent-brand focus:ring-brand"
                 />
                 <span className="truncate text-sm font-medium text-slate-900">{name}</span>
               </label>

@@ -44,7 +44,7 @@ export function GroupLayout() {
           {data.status === 'ARCHIVED' && <Badge tone="warning">{t('groups.status.ARCHIVED')}</Badge>}
         </div>
       </div>
-      <GroupTabs />
+      <GroupTabs showSettings={data.myRole === 'OWNER'} />
       <Outlet context={data} />
     </section>
   )

@@ -135,6 +135,15 @@ describe('MembersPage: leaving', () => {
     expect(screen.queryByRole('button', { name: 'Leave this group' })).not.toBeInTheDocument()
   })
 
+  it('does not send a lone owner into a dead end: nobody to hand the group to, so it points to archiving', async () => {
+    setUp({ myRole: 'OWNER' }, [FRIENDS[0]])
+    renderApp('/groups/g1/members')
+
+    expect(await screen.findByText(/You are the only member of this group/)).toBeInTheDocument()
+    expect(screen.queryByText(/transfer the ownership to another member/)).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open the settings' })).toHaveAttribute('href', '/groups/g1/settings')
+  })
+
   it('lets a member leave after a confirmation, and returns to their groups', async () => {
     setUp({ myRole: 'MEMBER' })
     let left = 0

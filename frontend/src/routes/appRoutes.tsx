@@ -8,6 +8,7 @@ import { ExpenseDetailPage } from '@/pages/ExpenseDetailPage'
 import { ExpenseFormPage } from '@/pages/ExpenseFormPage'
 import { ExpensesPage } from '@/pages/ExpensesPage'
 import { GroupDashboardPage } from '@/pages/GroupDashboardPage'
+import { GroupSettingsPage } from '@/pages/GroupSettingsPage'
 import { GroupsPage } from '@/pages/GroupsPage'
 import { JoinGroupPage } from '@/pages/JoinGroupPage'
 import { LoginPage } from '@/pages/LoginPage'
@@ -51,6 +52,7 @@ export const appRoutes: RouteObject[] = [
               { path: 'settlements', element: <SettlementsPage /> },
               { path: 'settlements/new', element: <NewSettlementPage /> },
               { path: 'members', element: <MembersPage /> },
+              { path: 'settings', element: <GroupSettingsPage /> },
             ] },
           { path: '/join', element: <JoinGroupPage /> },
           { path: '/join/:secret', element: <JoinGroupPage /> },

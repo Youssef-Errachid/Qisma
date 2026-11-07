@@ -7,7 +7,7 @@ const tabClass = ({ isActive }: { isActive: boolean }) =>
   }`
 
 /** The sections of a group. Relative links: they work under whatever address the group is mounted at. */
-export function GroupTabs() {
+export function GroupTabs({ showSettings = false }: { showSettings?: boolean }) {
   const { t } = useTranslation()
   return (
     <nav aria-label={t('tabs.main')} className="-mb-px flex gap-6 overflow-x-auto border-b border-slate-200">
@@ -26,6 +26,11 @@ export function GroupTabs() {
       <NavLink to="members" className={tabClass}>
         {t('tabs.members')}
       </NavLink>
+      {showSettings && (
+        <NavLink to="settings" className={tabClass}>
+          {t('tabs.settings')}
+        </NavLink>
+      )}
     </nav>
   )
 }

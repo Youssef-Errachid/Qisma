@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ConfirmPanel } from '@/components/shared/ConfirmPanel'
+import { FixLink } from '@/components/shared/FixLink'
 import { InvitationsSection } from '@/components/shared/InvitationsSection'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -10,22 +11,11 @@ import { useAuth } from '@/features/auth/useAuth'
 import { useGroupContext } from '@/features/groups/useGroupContext'
 import { useDeactivateMember, useLeaveGroup, useTransferOwnership } from '@/features/members/lifecycleQueries'
 import { useMembers } from '@/features/members/queries'
-import { ApiError } from '@/lib/api/errors'
 import { errorMessage } from '@/lib/api/errorMessage'
 import { formatDate } from '@/lib/format'
 import type { MemberResponse } from '@/types/api'
 
 type Pending = { userId: string; kind: 'remove' | 'owner' } | { userId: null; kind: 'leave' } | null
-
-/** Where to go to fix what a refusal is about: a balance that is not zero, or a repayment still waiting. */
-function FixLink({ error, groupId }: { error: unknown; groupId: string }) {
-  const { t } = useTranslation()
-  if (!(error instanceof ApiError)) return null
-  const base = `/groups/${encodeURIComponent(groupId)}`
-  if (error.code === 'BALANCE_NOT_SETTLED') return <Link to={`${base}/balances`} className="text-sm font-medium text-brand underline">{t('members.seeBalances')}</Link>
-  if (error.code === 'PENDING_SETTLEMENTS') return <Link to={`${base}/settlements`} className="text-sm font-medium text-brand underline">{t('members.seeRepayments')}</Link>
-  return null
-}
 
 export function MembersPage() {
   const { t, i18n } = useTranslation()
@@ -47,6 +37,7 @@ export function MembersPage() {
 
   const me = members.data.find((m) => m.userId === user?.id)
   const meActive = me?.status === 'ACTIVE'
+  const onlyMember = members.data.filter((m) => m.status === 'ACTIVE').length === 1
   const close = () => { setPending(null); deactivate.reset(); transfer.reset(); leave.reset() }
   const nameOf = (m: MemberResponse) => m.fullName || m.username
 
@@ -113,7 +104,13 @@ export function MembersPage() {
       {groupActive && meActive && (
         <section aria-labelledby="leave-title" className="space-y-3">
           <h2 id="leave-title" className="text-lg font-semibold">{t('members.leaveTitle')}</h2>
-          {isOwner ? (
+          {isOwner && onlyMember ? (
+            // nobody to hand the group to: leaving is not the way out, closing the group is
+            <p className="text-sm text-slate-600">
+              {t('members.onlyMember')}{' '}
+              <Link to={`/groups/${encodeURIComponent(group.id)}/settings`} className="font-medium text-brand underline">{t('members.goToSettings')}</Link>
+            </p>
+          ) : isOwner ? (
             <p className="text-sm text-slate-600">{t('members.ownerCannotLeave')}</p>
           ) : pending?.kind === 'leave' ? (
             <>
