@@ -11,7 +11,11 @@ public interface MembershipRepository extends MongoRepository<Membership, String
 
     Optional<Membership> findByGroupIdAndUserIdAndStatus(String groupId, String userId, MembershipStatus status);
 
+    Optional<Membership> findByGroupIdAndUserId(String groupId, String userId);
+
     List<Membership> findByUserIdAndStatus(String userId, MembershipStatus status);
 
     long countByUserIdAndStatus(String userId, MembershipStatus status);
+
+    long countByGroupIdAndStatus(String groupId, MembershipStatus status);
 }

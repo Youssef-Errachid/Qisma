@@ -48,6 +48,12 @@ public class MongoIndexConfig {
             memberships.createIndex(new Index().on("groupId", Sort.Direction.ASC)
                     .unique().named("uk_memberships_single_active_owner")
                     .partial(PartialIndexFilter.of(Criteria.where("role").is("OWNER").and("status").is("ACTIVE"))));
+
+            var invitations = mongo.indexOps("invitations");
+            invitations.createIndex(new Index().on("secretHash", Sort.Direction.ASC)
+                    .unique().named("uk_invitations_secretHash"));
+            invitations.createIndex(new Index().on("groupId", Sort.Direction.ASC)
+                    .on("status", Sort.Direction.ASC).named("ix_invitations_group_status"));
         };
     }
 }
