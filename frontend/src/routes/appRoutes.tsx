@@ -11,6 +11,7 @@ import { GroupDashboardPage } from '@/pages/GroupDashboardPage'
 import { GroupsPage } from '@/pages/GroupsPage'
 import { JoinGroupPage } from '@/pages/JoinGroupPage'
 import { LoginPage } from '@/pages/LoginPage'
+import { MembersPage } from '@/pages/MembersPage'
 import { NewSettlementPage } from '@/pages/NewSettlementPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { RegisterPage } from '@/pages/RegisterPage'
@@ -49,6 +50,7 @@ export const appRoutes: RouteObject[] = [
               { path: 'balances', element: <BalancesPage /> },
               { path: 'settlements', element: <SettlementsPage /> },
               { path: 'settlements/new', element: <NewSettlementPage /> },
+              { path: 'members', element: <MembersPage /> },
             ] },
           { path: '/join', element: <JoinGroupPage /> },
           { path: '/join/:secret', element: <JoinGroupPage /> },

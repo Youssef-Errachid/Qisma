@@ -275,6 +275,37 @@ export interface CreateSettlementRequest {
   note?: string
 }
 
+export const INVITATION_STATUSES = ['PENDING', 'ACCEPTED', 'EXPIRED', 'REVOKED'] as const
+export type InvitationStatus = (typeof INVITATION_STATUSES)[number]
+
+/** An invitation as listed. The secret is never in it: it is shown once, when the invitation is created. */
+export interface InvitationSummary {
+  id: string
+  type: InvitationType
+  status: InvitationStatus
+  useCount: number
+  maxUses: number
+  expiresAt: string | null
+  createdAt: string
+}
+
+export interface CreateInvitationRequest {
+  type: InvitationType
+  /** 1 to 30 */
+  expiresInDays?: number
+  /** 1 to 50 */
+  maxUses?: number
+}
+
+/** What creating an invitation returns: the only time the secret can be seen. */
+export interface InvitationCreated {
+  id: string
+  type: InvitationType
+  secret: string
+  maxUses: number
+  expiresAt: string | null
+}
+
 export interface LoginRequest {
   email: string
   password: string

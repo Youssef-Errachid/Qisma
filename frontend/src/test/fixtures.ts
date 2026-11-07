@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw'
-import type { ActivityLine, BalancesResponse, CategoryReport, ContributionsReport, ExpenseResponse, FieldError, GroupResponse, LoginResponse, MemberBalance, MemberResponse, MonthlyReport, PageResponse, ReportSummary, SettlementResponse, SuggestionsResponse, UserResponse } from '@/types/api'
+import type { ActivityLine, BalancesResponse, CategoryReport, ContributionsReport, ExpenseResponse, FieldError, GroupResponse, LoginResponse, InvitationSummary, MemberBalance, MemberResponse, MonthlyReport, PageResponse, ReportSummary, SettlementResponse, SuggestionsResponse, UserResponse } from '@/types/api'
 import { server } from './server'
 
 export const API = '*/api/v1'
@@ -110,6 +110,16 @@ export function expensesAre(groupId: string, page: PageResponse<ExpenseResponse>
 
 export function activityIs(groupId: string, lines: ActivityLine[]) {
   server.use(http.get(`${API}/groups/${groupId}/activity`, () => HttpResponse.json(pageOf(lines))))
+}
+
+export function invitation(overrides: Partial<InvitationSummary> = {}): InvitationSummary {
+  return { id: 'i1', type: 'CODE', status: 'PENDING', useCount: 0, maxUses: 5, expiresAt: '2026-11-20T00:00:00Z', createdAt: '2026-11-07T10:00:00Z', ...overrides }
+}
+
+/** The invitations of a group; the array may be changed by a test, and the next request sees the change. */
+export function invitationsAre(groupId: string, all: InvitationSummary[] = []) {
+  server.use(http.get(`${API}/groups/${groupId}/invitations`, () => HttpResponse.json(all)))
+  return all
 }
 
 export function balance(overrides: Partial<MemberBalance> = {}): MemberBalance {

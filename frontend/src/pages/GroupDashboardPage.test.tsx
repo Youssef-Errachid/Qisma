@@ -66,7 +66,8 @@ describe('GroupDashboardPage', () => {
     expect(within(settled).getByText(/40\.00/)).toHaveClass('text-credit')
 
     expect(within(screen.getByText('Number of expenses').closest('div') as HTMLElement).getByText('4')).toBeInTheDocument()
-    const members = screen.getByText('Members').closest('div') as HTMLElement
+    // "Members" is also the name of a tab of the group: look at the figure's own label
+    const members = screen.getByText('Members', { selector: 'dt' }).closest('div') as HTMLElement
     expect(within(members).getByText('3')).toBeInTheDocument()
     expect(within(members).getByText('2 active')).toBeInTheDocument()
     expect(screen.getByText('Pending repayments: 2')).toBeInTheDocument()
