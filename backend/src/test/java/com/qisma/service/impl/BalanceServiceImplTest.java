@@ -5,15 +5,18 @@ import com.qisma.dto.response.MemberBalanceResponse;
 import com.qisma.enums.ExpenseStatus;
 import com.qisma.enums.GroupRole;
 import com.qisma.enums.MembershipStatus;
+import com.qisma.enums.SettlementStatus;
 import com.qisma.exception.ApiException;
 import com.qisma.exception.ErrorCode;
 import com.qisma.model.Expense;
 import com.qisma.model.ExpenseShare;
 import com.qisma.model.Group;
 import com.qisma.model.Membership;
+import com.qisma.model.Settlement;
 import com.qisma.model.User;
 import com.qisma.repository.ExpenseRepository;
 import com.qisma.repository.MembershipRepository;
+import com.qisma.repository.SettlementRepository;
 import com.qisma.repository.UserRepository;
 import com.qisma.security.GroupAccessGuard;
 import com.qisma.service.finance.BalanceCalculator;
@@ -37,6 +40,7 @@ class BalanceServiceImplTest {
 
     private ExpenseRepository expenses;
     private MembershipRepository memberships;
+    private SettlementRepository settlements;
     private UserRepository users;
     private GroupAccessGuard guard;
     private BalanceServiceImpl service;
@@ -45,9 +49,11 @@ class BalanceServiceImplTest {
     void setUp() {
         expenses = mock(ExpenseRepository.class);
         memberships = mock(MembershipRepository.class);
+        settlements = mock(SettlementRepository.class);
         users = mock(UserRepository.class);
         guard = mock(GroupAccessGuard.class);
-        service = new BalanceServiceImpl(expenses, memberships, users, guard, new BalanceCalculator());
+        service = new BalanceServiceImpl(
+                new LedgerServiceImpl(expenses, memberships, settlements, new BalanceCalculator()), users, guard);
 
         Group group = new Group();
         group.setId("g1");
@@ -86,6 +92,15 @@ class BalanceServiceImplTest {
         return new ExpenseShare(userId, amount, null);
     }
 
+    private static Settlement settlement(String from, String to, long amount) {
+        Settlement s = new Settlement();
+        s.setGroupId("g1");
+        s.setFromUserId(from);
+        s.setToUserId(to);
+        s.setAmountMinor(amount);
+        return s;
+    }
+
     /** The three expenses of cahier section 8.2, shares as the equal split really produces them. */
     private void cahierExpenses() {
         when(expenses.findByGroupIdAndStatus("g1", ExpenseStatus.ACTIVE)).thenReturn(List.of(
@@ -116,10 +131,48 @@ class BalanceServiceImplTest {
     }
 
     @Test
-    void theSumOfAllNetBalancesIsAlwaysZero() {
+    void withoutSettlements_theEffectiveNetEqualsTheNet() {
         cahierExpenses();
-        assertEquals(0L, service.getBalances("youssef", "g1").members().stream()
-                .mapToLong(MemberBalanceResponse::netMinor).sum());
+
+        service.getBalances("youssef", "g1").members().forEach(m -> {
+            assertEquals(m.netMinor(), m.effectiveNetMinor(), m.userId());
+            assertEquals(0L, m.pendingOutMinor());
+            assertEquals(0L, m.pendingInMinor());
+        });
+    }
+
+    @Test
+    void aConfirmedSettlement_appearsAsSentAndReceived_andReducesTheNet() {
+        cahierExpenses();
+        when(settlements.findByGroupIdAndStatus("g1", SettlementStatus.CONFIRMED))
+                .thenReturn(List.of(settlement("ahmed", "youssef", 6667)));
+
+        BalancesResponse r = service.getBalances("youssef", "g1");
+        Map<String, MemberBalanceResponse> b = byUser(r);
+
+        assertEquals(6667L, b.get("ahmed").sentMinor());
+        assertEquals(0L, b.get("ahmed").netMinor());
+        assertEquals(6667L, b.get("youssef").receivedMinor());
+        assertEquals(1666L, b.get("youssef").netMinor());
+        assertEquals(-1666L, b.get("hamza").netMinor());
+        assertEquals(0L, r.sumMinor());
+    }
+
+    @Test
+    void aPendingSettlement_isShownButDoesNotMoveTheNet() {
+        cahierExpenses();
+        when(settlements.findByGroupIdAndStatus("g1", SettlementStatus.PENDING))
+                .thenReturn(List.of(settlement("ahmed", "youssef", 3000)));
+
+        BalancesResponse r = service.getBalances("youssef", "g1");
+        Map<String, MemberBalanceResponse> b = byUser(r);
+
+        assertEquals(-6667L, b.get("ahmed").netMinor());
+        assertEquals(3000L, b.get("ahmed").pendingOutMinor());
+        assertEquals(-3667L, b.get("ahmed").effectiveNetMinor());
+        assertEquals(3000L, b.get("youssef").pendingInMinor());
+        assertEquals(5333L, b.get("youssef").effectiveNetMinor());
+        assertEquals(0L, r.sumMinor());
     }
 
     @Test
@@ -196,7 +249,7 @@ class BalanceServiceImplTest {
 
         assertThrows(ApiException.class, () -> service.getBalances("stranger", "g1"));
         assertThrows(ApiException.class, () -> service.getBalance("stranger", "g1", "ahmed"));
-        verifyNoInteractions(expenses, users);
+        verifyNoInteractions(expenses, users, settlements);
     }
 
     @Test
