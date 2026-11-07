@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import { HttpResponse, http } from 'msw'
 import { describe, expect, it } from 'vitest'
 import { API, asSignedIn, emptySummary, group, groupIs, problem, reportsAre } from '@/test/fixtures'
@@ -95,15 +95,21 @@ describe('GroupDashboardPage', () => {
     expect(contributionRows[1]).toEqual(['Ahmed B.', 'MAD 100.00', 'MAD 353.33'])
   })
 
-  it('draws the charts (loaded on demand) as pictures hidden from screen readers', async () => {
+  it('draws each chart inside a container hidden from screen readers, whose table is their version', async () => {
     withData()
     renderApp('/groups/g1')
 
-    const monthly = (await screen.findByRole('heading', { name: 'Spending by month' })).closest('figure') as HTMLElement
-    await within(monthly).findByRole('img', { hidden: true }).catch(() => undefined)
-    const picture = monthly.querySelector('[aria-hidden="true"]') as HTMLElement
-    expect(picture).toBeInTheDocument()
-    await screen.findByRole('table', { name: 'Spending by month' })
+    for (const title of ['Spending by month', 'Spending by category', 'Who paid, and each share']) {
+      await screen.findByRole('heading', { name: title })
+      // the chart library is downloaded on demand, so the picture appears a moment after its card. Wait for it, and
+      // look the card up again at every attempt: it may be rendered again while the chart loads
+      await waitFor(() => {
+        const card = screen.getByRole('heading', { name: title }).closest('figure')
+        expect(card?.querySelector('[aria-hidden="true"] svg'), `no picture yet in "${title}"`).not.toBeNull()
+      })
+      const card = screen.getByRole('heading', { name: title }).closest('figure') as HTMLElement
+      expect(within(card).getByRole('table', { name: title })).toBeInTheDocument()
+    }
   })
 
   it('shows an invitation to add the first expense instead of empty charts', async () => {

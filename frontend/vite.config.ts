@@ -20,5 +20,6 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     css: false,
     restoreMocks: true,
+    testTimeout: 20_000, // a whole screen flow with several requests can take a while on a busy machine
   },
 })

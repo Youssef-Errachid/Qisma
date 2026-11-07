@@ -1,9 +1,14 @@
 import '@testing-library/jest-dom/vitest'
-import { cleanup } from '@testing-library/react'
+import { cleanup, configure } from '@testing-library/react'
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest'
 import i18n from '@/i18n'
 import { tokenStore } from '@/lib/api/tokenStore'
 import { server } from './server'
+
+// Waiting for the screen to change (findBy, waitFor) gives up after one second by default. A group page loads the
+// group, four reports and the chart library on demand, which takes longer on a busy machine (and tests run in
+// parallel). A generous limit costs nothing when everything is fast: a test only waits as long as it needs.
+configure({ asyncUtilTimeout: 5000 })
 
 // jsdom has no layout and no ResizeObserver, which the charts use to measure their container:
 // give every observed element a size, so the charts draw instead of warning about a 0x0 box
