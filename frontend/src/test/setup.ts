@@ -4,6 +4,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest'
 import i18n from '@/i18n'
 import { tokenStore } from '@/lib/api/tokenStore'
 import { server } from './server'
+import { waitForIdle } from './utils'
 
 // Waiting for the screen to change (findBy, waitFor) gives up after one second by default. A group page loads the
 // group, four reports and the chart library on demand, which takes longer on a busy machine (and tests run in
@@ -40,7 +41,8 @@ beforeEach(async () => {
   await i18n.changeLanguage('en')
 })
 
-afterEach(() => {
+afterEach(async () => {
+  await waitForIdle()
   cleanup()
   server.resetHandlers()
 })

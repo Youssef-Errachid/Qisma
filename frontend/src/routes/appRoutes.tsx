@@ -3,6 +3,7 @@ import { AppLayout } from '@/components/layout/AppLayout'
 import { AuthLayout } from '@/components/layout/AuthLayout'
 import { GroupLayout } from '@/components/layout/GroupLayout'
 import { CreateGroupPage } from '@/pages/CreateGroupPage'
+import { BalancesPage } from '@/pages/BalancesPage'
 import { ExpenseDetailPage } from '@/pages/ExpenseDetailPage'
 import { ExpenseFormPage } from '@/pages/ExpenseFormPage'
 import { ExpensesPage } from '@/pages/ExpensesPage'
@@ -10,8 +11,10 @@ import { GroupDashboardPage } from '@/pages/GroupDashboardPage'
 import { GroupsPage } from '@/pages/GroupsPage'
 import { JoinGroupPage } from '@/pages/JoinGroupPage'
 import { LoginPage } from '@/pages/LoginPage'
+import { NewSettlementPage } from '@/pages/NewSettlementPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { RegisterPage } from '@/pages/RegisterPage'
+import { SettlementsPage } from '@/pages/SettlementsPage'
 import { ProtectedRoute } from './ProtectedRoute'
 import { PublicOnlyRoute } from './PublicOnlyRoute'
 
@@ -43,6 +46,9 @@ export const appRoutes: RouteObject[] = [
               { path: 'expenses/new', element: <ExpenseFormPage /> },
               { path: 'expenses/:expenseId', element: <ExpenseDetailPage /> },
               { path: 'expenses/:expenseId/edit', element: <ExpenseFormPage /> },
+              { path: 'balances', element: <BalancesPage /> },
+              { path: 'settlements', element: <SettlementsPage /> },
+              { path: 'settlements/new', element: <NewSettlementPage /> },
             ] },
           { path: '/join', element: <JoinGroupPage /> },
           { path: '/join/:secret', element: <JoinGroupPage /> },

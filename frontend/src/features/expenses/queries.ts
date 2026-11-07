@@ -1,5 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { balanceKeys } from '@/features/balances/keys'
 import { reportKeys } from '@/features/reports/queries'
+import { settlementKeys } from '@/features/settlements/keys'
 import { type ExpenseFilters, toApiQuery } from './filters'
 import { createExpense, deleteExpense, getExpense, listExpenses, updateExpense } from './expenseService'
 import type { ExpenseRequest, UpdateExpenseRequest } from '@/types/api'
@@ -25,13 +27,15 @@ export function useExpense(groupId: string, expenseId: string) {
   return useQuery({ queryKey: expenseKeys.detail(groupId, expenseId), queryFn: () => getExpense(groupId, expenseId) })
 }
 
-/** What an expense changes: its own screens, and every figure and chart that adds expenses up. */
+/** What changes when money moves: the expenses, the reports, the balances and the suggested repayments built on them. */
 export function useInvalidateMoney(groupId: string) {
   const queryClient = useQueryClient()
   return () =>
     Promise.all([
       queryClient.invalidateQueries({ queryKey: expenseKeys.group(groupId) }),
       queryClient.invalidateQueries({ queryKey: reportKeys.group(groupId) }),
+      queryClient.invalidateQueries({ queryKey: balanceKeys.group(groupId) }),
+      queryClient.invalidateQueries({ queryKey: settlementKeys.group(groupId) }),
     ])
 }
 

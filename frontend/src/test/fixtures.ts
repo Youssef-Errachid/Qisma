@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw'
-import type { ActivityLine, CategoryReport, ContributionsReport, ExpenseResponse, FieldError, GroupResponse, LoginResponse, MemberResponse, MonthlyReport, PageResponse, ReportSummary, UserResponse } from '@/types/api'
+import type { ActivityLine, BalancesResponse, CategoryReport, ContributionsReport, ExpenseResponse, FieldError, GroupResponse, LoginResponse, MemberBalance, MemberResponse, MonthlyReport, PageResponse, ReportSummary, SettlementResponse, SuggestionsResponse, UserResponse } from '@/types/api'
 import { server } from './server'
 
 export const API = '*/api/v1'
@@ -110,6 +110,59 @@ export function expensesAre(groupId: string, page: PageResponse<ExpenseResponse>
 
 export function activityIs(groupId: string, lines: ActivityLine[]) {
   server.use(http.get(`${API}/groups/${groupId}/activity`, () => HttpResponse.json(pageOf(lines))))
+}
+
+export function balance(overrides: Partial<MemberBalance> = {}): MemberBalance {
+  const net = overrides.netMinor ?? 0
+  return {
+    userId: 'u-youssef', username: 'youssef', fullName: 'Youssef E.', membershipStatus: 'ACTIVE',
+    paidMinor: 0, shareMinor: 0, sentMinor: 0, receivedMinor: 0, netMinor: net,
+    pendingOutMinor: 0, pendingInMinor: 0, effectiveNetMinor: net,
+    ...overrides,
+  }
+}
+
+/** Youssef is owed 100.00; Ahmed owes 150.00; Hamza is owed 50.00. */
+export const BALANCES: BalancesResponse = {
+  currency: 'MAD',
+  sumMinor: 0,
+  members: [
+    balance({ userId: 'u-youssef', username: 'youssef', fullName: 'Youssef E.', netMinor: 10000, paidMinor: 30000, shareMinor: 20000 }),
+    balance({ userId: 'u-ahmed', username: 'ahmed', fullName: 'Ahmed B.', netMinor: -15000, paidMinor: 5000, shareMinor: 20000 }),
+    balance({ userId: 'u-hamza', username: 'hamza', fullName: 'Hamza K.', netMinor: 5000, paidMinor: 25000, shareMinor: 20000 }),
+  ],
+}
+
+export function balancesAre(groupId: string, balances: BalancesResponse = BALANCES) {
+  server.use(http.get(`${API}/groups/${groupId}/balances`, () => HttpResponse.json(balances)))
+}
+
+export function suggestionsAre(groupId: string, transfers: SuggestionsResponse['transfers'] = []) {
+  server.use(http.get(`${API}/groups/${groupId}/settlements/suggestions`, () => HttpResponse.json({ currency: 'MAD', transfers })))
+}
+
+export function settlement(overrides: Partial<SettlementResponse> = {}): SettlementResponse {
+  return {
+    id: 's1', groupId: 'g1', fromUserId: 'u-ahmed', fromUsername: 'ahmed', toUserId: 'u-youssef', toUsername: 'youssef',
+    amountMinor: 5000, currency: 'MAD', note: null, status: 'PENDING', createdAt: '2026-11-05T10:00:00Z',
+    confirmedAt: null, rejectedAt: null, rejectionReason: null, cancelledAt: null, version: 0, ...overrides,
+  }
+}
+
+/** A small fake of the settlements list: it filters by status and cuts pages like the server does. */
+export function settlementsAre(groupId: string, all: SettlementResponse[]) {
+  const seen: Array<Record<string, string>> = []
+  server.use(http.get(`${API}/groups/${groupId}/settlements`, ({ request }) => {
+    const params = new URL(request.url).searchParams
+    seen.push(Object.fromEntries(params))
+    const status = params.get('status')
+    const page = Number(params.get('page') ?? 0)
+    const size = Number(params.get('size') ?? 20)
+    const filtered = all.filter((s) => !status || s.status === status)
+    const items = filtered.slice(page * size, page * size + size)
+    return HttpResponse.json({ items, page, size, totalElements: filtered.length, totalPages: Math.ceil(filtered.length / size) })
+  }))
+  return seen
 }
 
 export const emptySummary: ReportSummary = {

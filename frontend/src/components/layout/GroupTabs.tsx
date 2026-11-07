@@ -17,6 +17,12 @@ export function GroupTabs() {
       <NavLink to="expenses" className={tabClass}>
         {t('tabs.expenses')}
       </NavLink>
+      <NavLink to="balances" className={tabClass}>
+        {t('tabs.balances')}
+      </NavLink>
+      <NavLink to="settlements" className={tabClass}>
+        {t('tabs.settlements')}
+      </NavLink>
     </nav>
   )
 }

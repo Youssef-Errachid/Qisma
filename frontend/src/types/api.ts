@@ -207,6 +207,74 @@ export interface ActivityLine {
   newValue: Record<string, unknown> | null
 }
 
+export const SETTLEMENT_STATUSES = ['PENDING', 'CONFIRMED', 'REJECTED', 'CANCELLED'] as const
+export type SettlementStatus = (typeof SETTLEMENT_STATUSES)[number]
+
+/**
+ * net = paid - share + sent - received, over expenses and CONFIRMED repayments only: positive means the member should
+ * receive money, negative means they owe it. effectiveNet = net + pendingOut - pendingIn: where they end up once every
+ * repayment still waiting is confirmed. All integers in minor units.
+ */
+export interface MemberBalance {
+  userId: string
+  username: string
+  fullName: string
+  membershipStatus: MembershipStatus
+  paidMinor: number
+  shareMinor: number
+  sentMinor: number
+  receivedMinor: number
+  netMinor: number
+  pendingOutMinor: number
+  pendingInMinor: number
+  effectiveNetMinor: number
+}
+
+export interface BalancesResponse {
+  currency: string
+  /** must always be 0: what some are owed is exactly what others owe */
+  sumMinor: number
+  members: MemberBalance[]
+}
+
+export interface TransferSuggestion {
+  fromUserId: string
+  fromUsername: string
+  toUserId: string
+  toUsername: string
+  amountMinor: number
+}
+
+export interface SuggestionsResponse {
+  currency: string
+  transfers: TransferSuggestion[]
+}
+
+export interface SettlementResponse {
+  id: string
+  groupId: string
+  fromUserId: string
+  fromUsername: string
+  toUserId: string
+  toUsername: string
+  amountMinor: number
+  currency: string
+  note: string | null
+  status: SettlementStatus
+  createdAt: string
+  confirmedAt: string | null
+  rejectedAt: string | null
+  rejectionReason: string | null
+  cancelledAt: string | null
+  version: number
+}
+
+export interface CreateSettlementRequest {
+  toUserId: string
+  amountMinor: number
+  note?: string
+}
+
 export interface LoginRequest {
   email: string
   password: string
