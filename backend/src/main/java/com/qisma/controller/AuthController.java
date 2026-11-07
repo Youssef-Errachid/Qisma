@@ -1,9 +1,10 @@
 package com.qisma.controller;
 
+import com.qisma.dto.request.LoginRequest;
 import com.qisma.dto.request.RegisterRequest;
+import com.qisma.dto.response.LoginResponse;
 import com.qisma.dto.response.UserResponse;
 import com.qisma.service.AuthService;
-
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,5 +27,10 @@ public class AuthController {
     @ResponseStatus(HttpStatus.CREATED)
     public UserResponse register(@Valid @RequestBody RegisterRequest request) {
         return authService.register(request);
+    }
+
+    @PostMapping("/login")
+    public LoginResponse login(@Valid @RequestBody LoginRequest request) {
+        return authService.login(request);
     }
 }

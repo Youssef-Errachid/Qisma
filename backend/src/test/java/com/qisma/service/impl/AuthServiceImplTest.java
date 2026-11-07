@@ -9,6 +9,8 @@ import com.qisma.model.User;
 import com.qisma.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import com.qisma.security.JwtService;
+import java.time.Clock;
 import org.mockito.ArgumentCaptor;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -29,7 +31,7 @@ class AuthServiceImplTest {
 
         users = mock(UserRepository.class);
         encoder = new BCryptPasswordEncoder();
-        service = new AuthServiceImpl(users, encoder, new UserMapper());
+        service = new AuthServiceImpl(users, encoder, new UserMapper(), mock(JwtService.class), Clock.systemUTC());
         when(users.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
     }
 
