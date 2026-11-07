@@ -18,6 +18,8 @@ public enum ErrorCode {
     ALREADY_MEMBER(HttpStatus.CONFLICT),
     INVITATION_NOT_PENDING(HttpStatus.CONFLICT),
     LIMIT_REACHED(HttpStatus.valueOf(422)),
+    INVALID_SPLIT(HttpStatus.valueOf(422)),
+    PARTICIPANT_NOT_MEMBER(HttpStatus.valueOf(422)),
     TOO_MANY_ATTEMPTS(HttpStatus.TOO_MANY_REQUESTS),
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR);
 
