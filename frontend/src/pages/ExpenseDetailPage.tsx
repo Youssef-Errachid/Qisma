@@ -124,9 +124,14 @@ export function ExpenseDetailPage() {
         <div className="space-y-3">
           {remove.isError && <Alert variant="error">{errorMessage(t, remove.error)}</Alert>}
           {!confirming ? (
-            <Button variant="secondary" onClick={() => setConfirming(true)}>
-              {t('expenses.detail.delete')}
-            </Button>
+            <div className="flex flex-wrap gap-3">
+              <Link to="edit">
+                <Button variant="secondary">{t('expenseForm.edit')}</Button>
+              </Link>
+              <Button variant="secondary" onClick={() => setConfirming(true)}>
+                {t('expenses.detail.delete')}
+              </Button>
+            </div>
           ) : (
             <div role="group" aria-labelledby="delete-title" className="space-y-3 rounded-2xl bg-debt-soft p-5 ring-1 ring-inset ring-rose-200">
               <p id="delete-title" className="font-semibold text-debt">{t('expenses.detail.deleteTitle')}</p>

@@ -1,5 +1,5 @@
 import { api } from '@/lib/api/client'
-import type { ExpenseResponse, PageResponse } from '@/types/api'
+import type { ExpenseRequest, ExpenseResponse, PageResponse, UpdateExpenseRequest } from '@/types/api'
 
 const base = (groupId: string) => `/groups/${encodeURIComponent(groupId)}/expenses`
 
@@ -12,6 +12,17 @@ export async function listExpenses(groupId: string, query: ExpenseQuery): Promis
 
 export async function getExpense(groupId: string, expenseId: string): Promise<ExpenseResponse> {
   const { data } = await api.get<ExpenseResponse>(`${base(groupId)}/${encodeURIComponent(expenseId)}`)
+  return data
+}
+
+export async function createExpense(groupId: string, request: ExpenseRequest): Promise<ExpenseResponse> {
+  const { data } = await api.post<ExpenseResponse>(base(groupId), request)
+  return data
+}
+
+/** Replaces the expense. Refused with VERSION_CONFLICT when someone saved a newer version meanwhile. */
+export async function updateExpense(groupId: string, expenseId: string, request: UpdateExpenseRequest): Promise<ExpenseResponse> {
+  const { data } = await api.put<ExpenseResponse>(`${base(groupId)}/${encodeURIComponent(expenseId)}`, request)
   return data
 }
 

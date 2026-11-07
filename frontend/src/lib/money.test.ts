@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { MAX_AMOUNT_MINOR, formatMoney, parseMoney } from './money'
+import { MAX_AMOUNT_MINOR, bpToInput, formatMoney, minorToInput, parseMoney, parsePercent } from './money'
 
 describe('parseMoney', () => {
   it('turns typed amounts into whole minor units, without any decimal arithmetic', () => {
@@ -63,5 +63,57 @@ describe('formatMoney', () => {
       const typed = (minor / 100).toFixed(2)
       expect(parseMoney(typed)).toBe(minor)
     }
+  })
+})
+
+describe('parseMoney with zero allowed (a share of 0.00 is a valid share)', () => {
+  it('accepts zero only when asked to', () => {
+    expect(parseMoney('0')).toBeNull()
+    expect(parseMoney('0', 2, { allowZero: true })).toBe(0)
+    expect(parseMoney('0.00', 2, { allowZero: true })).toBe(0)
+    expect(parseMoney('-1', 2, { allowZero: true })).toBeNull()
+  })
+})
+
+describe('minorToInput', () => {
+  it('writes minor units the way parseMoney reads them back, for any amount', () => {
+    expect(minorToInput(3334)).toBe('33.34')
+    expect(minorToInput(5)).toBe('0.05')
+    expect(minorToInput(10000)).toBe('100.00')
+    expect(minorToInput(12, 0)).toBe('12')
+    for (const minor of [1, 9, 10, 99, 100, 101, 12345, 999999999999]) {
+      expect(parseMoney(minorToInput(minor)), String(minor)).toBe(minor)
+    }
+  })
+})
+
+describe('parsePercent and bpToInput', () => {
+  it('turns what people type into basis points', () => {
+    expect(parsePercent('50')).toBe(5000)
+    expect(parsePercent('33.33')).toBe(3333)
+    expect(parsePercent('33,3')).toBe(3330)
+    expect(parsePercent(' 12.5 % ')).toBe(1250)
+    expect(parsePercent('0')).toBe(0)
+    expect(parsePercent('100')).toBe(10000)
+  })
+
+  it('refuses above 100%, beyond two decimals, and anything else', () => {
+    for (const bad of ['', '100.01', '101', '12.345', '-5', 'abc', '5%%', '1e1', '.5']) {
+      expect(parsePercent(bad), JSON.stringify(bad)).toBeNull()
+    }
+  })
+
+  it('round-trips every basis point from 0 to 10000', () => {
+    for (let bp = 0; bp <= 10000; bp++) {
+      expect(parsePercent(bpToInput(bp)), String(bp)).toBe(bp)
+    }
+  })
+
+  it('writes round numbers without noise', () => {
+    expect(bpToInput(5000)).toBe('50')
+    expect(bpToInput(3333)).toBe('33.33')
+    expect(bpToInput(3330)).toBe('33.3')
+    expect(bpToInput(10000)).toBe('100')
+    expect(bpToInput(1)).toBe('0.01')
   })
 })

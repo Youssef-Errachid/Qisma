@@ -1,7 +1,8 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { reportKeys } from '@/features/reports/queries'
 import { type ExpenseFilters, toApiQuery } from './filters'
-import { deleteExpense, getExpense, listExpenses } from './expenseService'
+import { createExpense, deleteExpense, getExpense, listExpenses, updateExpense } from './expenseService'
+import type { ExpenseRequest, UpdateExpenseRequest } from '@/types/api'
 
 /** Everything about the expenses of a group is under expenseKeys.group(groupId): one call refreshes all of it. */
 export const expenseKeys = {
@@ -32,6 +33,26 @@ export function useInvalidateMoney(groupId: string) {
       queryClient.invalidateQueries({ queryKey: expenseKeys.group(groupId) }),
       queryClient.invalidateQueries({ queryKey: reportKeys.group(groupId) }),
     ])
+}
+
+export function useCreateExpense(groupId: string) {
+  const invalidate = useInvalidateMoney(groupId)
+  return useMutation({
+    mutationFn: (request: ExpenseRequest) => createExpense(groupId, request),
+    onSuccess: () => invalidate(),
+  })
+}
+
+export function useUpdateExpense(groupId: string, expenseId: string) {
+  const queryClient = useQueryClient()
+  const invalidate = useInvalidateMoney(groupId)
+  return useMutation({
+    mutationFn: (request: UpdateExpenseRequest) => updateExpense(groupId, expenseId, request),
+    onSuccess: (saved) => {
+      queryClient.setQueryData(expenseKeys.detail(groupId, expenseId), saved)
+      return invalidate()
+    },
+  })
 }
 
 export function useDeleteExpense(groupId: string) {

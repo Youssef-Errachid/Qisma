@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useLocation, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ExpenseRow } from '@/components/shared/ExpenseRow'
 import { Alert } from '@/components/ui/Alert'
@@ -42,8 +42,18 @@ export function ExpensesPage() {
   const deleted = (location.state as { deleted?: boolean } | null)?.deleted === true
   const everyone = members.data ?? []
 
+  // only an active member of an active group can add an expense (the server decides for real)
+  const canAdd = group.status === 'ACTIVE' && everyone.some((m) => m.userId === user?.id && m.status === 'ACTIVE')
+
   return (
     <section className="space-y-6 pt-6">
+      {canAdd && (
+        <div className="flex justify-end">
+          <Link to="new">
+            <Button>{t('expenseForm.addExpense')}</Button>
+          </Link>
+        </div>
+      )}
       {deleted && <Alert variant="success">{t('expenses.deleted')}</Alert>}
 
       <div className="grid gap-4 rounded-2xl bg-white p-5 shadow-xs ring-1 ring-slate-200 sm:grid-cols-2 lg:grid-cols-3">

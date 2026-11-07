@@ -136,6 +136,30 @@ export interface MemberResponse {
   joinedAt: string
 }
 
+/** Only the field that belongs to the split method is sent: the server refuses an EQUAL split that carries amounts. */
+export interface ParticipantInput {
+  userId: string
+  shareMinor?: number
+  percentageBp?: number
+}
+
+export interface ExpenseRequest {
+  title: string
+  description?: string
+  amountMinor: number
+  paidBy: string
+  /** yyyy-MM-dd */
+  expenseDate: string
+  category: ExpenseCategory
+  splitMethod: SplitMethod
+  participants: ParticipantInput[]
+}
+
+export interface UpdateExpenseRequest extends ExpenseRequest {
+  /** the version the user was looking at: a stale one is refused, so nobody overwrites a change they never saw */
+  version: number
+}
+
 export interface ExpenseShare {
   userId: string
   shareMinor: number

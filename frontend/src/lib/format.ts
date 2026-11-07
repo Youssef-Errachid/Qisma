@@ -5,6 +5,12 @@ export function localeFor(language: string): string {
   return 'en-GB'
 }
 
+/** Today as yyyy-MM-dd in the time zone of the person (a date field must not jump to tomorrow in the evening). */
+export function todayIso(now: Date = new Date()): string {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+}
+
 export function formatDate(iso: string, language: string): string {
   return new Intl.DateTimeFormat(localeFor(language), { dateStyle: 'medium', timeZone: 'UTC' }).format(new Date(iso))
 }
