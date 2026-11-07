@@ -54,6 +54,18 @@ public class MongoIndexConfig {
                     .unique().named("uk_invitations_secretHash"));
             invitations.createIndex(new Index().on("groupId", Sort.Direction.ASC)
                     .on("status", Sort.Direction.ASC).named("ix_invitations_group_status"));
+
+            var expenses = mongo.indexOps("expenses");
+            expenses.createIndex(new Index().on("groupId", Sort.Direction.ASC)
+                    .on("status", Sort.Direction.ASC)
+                    .on("expenseDate", Sort.Direction.DESC).named("ix_expenses_group_status_date"));
+            expenses.createIndex(new Index().on("groupId", Sort.Direction.ASC)
+                    .on("category", Sort.Direction.ASC)
+                    .on("expenseDate", Sort.Direction.DESC).named("ix_expenses_group_category_date"));
+            expenses.createIndex(new Index().on("groupId", Sort.Direction.ASC)
+                    .on("paidBy", Sort.Direction.ASC).named("ix_expenses_group_paidBy"));
+            expenses.createIndex(new Index().on("groupId", Sort.Direction.ASC)
+                    .on("shares.userId", Sort.Direction.ASC).named("ix_expenses_group_shareUser"));
         };
     }
 }
