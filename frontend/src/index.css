@@ -1,1 +1,18 @@
 @import "tailwindcss";
+
+@theme {
+  /* money: green = to receive, red = owed, neutral = balanced */
+  --color-credit: var(--color-emerald-600);
+  --color-credit-soft: var(--color-emerald-50);
+  --color-debt: var(--color-rose-600);
+  --color-debt-soft: var(--color-rose-50);
+  --color-brand: var(--color-emerald-600);
+  --color-brand-strong: var(--color-emerald-700);
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Noto Naskh Arabic", "Helvetica Neue", Arial, sans-serif;
+}
+
+html {
+  font-family: var(--font-sans);
+  color: var(--color-slate-900);
+  background: var(--color-slate-50);
+}

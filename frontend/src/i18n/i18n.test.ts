@@ -1,0 +1,36 @@
+import { describe, expect, it } from 'vitest'
+import i18n, { setLanguage } from '@/i18n'
+import { resources } from './resources'
+
+function keysOf(value: unknown, prefix = ''): string[] {
+  if (typeof value !== 'object' || value === null) {
+    return [prefix]
+  }
+  return Object.entries(value).flatMap(([key, child]) => keysOf(child, prefix ? `${prefix}.${key}` : key))
+}
+
+describe('translations', () => {
+  it('have exactly the same keys in every language, so no screen ever shows a raw key', () => {
+    const english = keysOf(resources.en.translation).sort()
+
+    expect(keysOf(resources.fr.translation).sort()).toEqual(english)
+    expect(keysOf(resources.ar.translation).sort()).toEqual(english)
+  })
+
+  it('keep the interpolation placeholders of the reference language', () => {
+    expect(resources.fr.translation.join.expires).toContain('{{date}}')
+    expect(resources.ar.translation.join.expires).toContain('{{date}}')
+  })
+
+  it('switch the document language and direction: Arabic is right-to-left', async () => {
+    setLanguage('ar')
+    await i18n.changeLanguage('ar')
+    expect(document.documentElement.lang).toBe('ar')
+    expect(document.documentElement.dir).toBe('rtl')
+
+    setLanguage('fr')
+    await i18n.changeLanguage('fr')
+    expect(document.documentElement.dir).toBe('ltr')
+    expect(localStorage.getItem('qisma.lang')).toBe('fr')
+  })
+})

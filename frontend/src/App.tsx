@@ -1,9 +1,19 @@
+import { useState } from 'react'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { RouterProvider, createBrowserRouter } from 'react-router-dom'
+import { AuthProvider } from '@/features/auth/AuthProvider'
+import { createQueryClient } from '@/lib/queryClient'
+import { appRoutes } from '@/routes/appRoutes'
+
+const router = createBrowserRouter(appRoutes)
+
 export default function App() {
+  const [queryClient] = useState(createQueryClient)
   return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <h1 className="text-3xl font-bold text-emerald-600">
-          QISMA — Share Expenses. Stay Balanced.
-        </h1>
-      </div>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
+    </QueryClientProvider>
   )
 }

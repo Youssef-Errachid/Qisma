@@ -1,0 +1,45 @@
+import { Navigate, type RouteObject } from 'react-router-dom'
+import { AppLayout } from '@/components/layout/AppLayout'
+import { AuthLayout } from '@/components/layout/AuthLayout'
+import { GroupLayout } from '@/components/layout/GroupLayout'
+import { CreateGroupPage } from '@/pages/CreateGroupPage'
+import { GroupOverviewPage } from '@/pages/GroupOverviewPage'
+import { GroupsPage } from '@/pages/GroupsPage'
+import { JoinGroupPage } from '@/pages/JoinGroupPage'
+import { LoginPage } from '@/pages/LoginPage'
+import { NotFoundPage } from '@/pages/NotFoundPage'
+import { RegisterPage } from '@/pages/RegisterPage'
+import { ProtectedRoute } from './ProtectedRoute'
+import { PublicOnlyRoute } from './PublicOnlyRoute'
+
+export const appRoutes: RouteObject[] = [
+  {
+    element: <PublicOnlyRoute />,
+    children: [
+      {
+        element: <AuthLayout />,
+        children: [
+          { path: '/login', element: <LoginPage /> },
+          { path: '/register', element: <RegisterPage /> },
+        ],
+      },
+    ],
+  },
+  {
+    element: <ProtectedRoute />,
+    children: [
+      {
+        element: <AppLayout />,
+        children: [
+          { path: '/', element: <Navigate to="/groups" replace /> },
+          { path: '/groups', element: <GroupsPage /> },
+          { path: '/groups/new', element: <CreateGroupPage /> },
+          { path: '/groups/:groupId', element: <GroupLayout />, children: [{ index: true, element: <GroupOverviewPage /> }] },
+          { path: '/join', element: <JoinGroupPage /> },
+          { path: '/join/:secret', element: <JoinGroupPage /> },
+        ],
+      },
+    ],
+  },
+  { path: '*', element: <NotFoundPage /> },
+]
