@@ -17,7 +17,9 @@ export function ChartCard({ title, description, columns, rows, children }: Chart
         {description && <p className="mt-0.5 text-sm text-slate-500">{description}</p>}
       </figcaption>
       <div aria-hidden="true">{children}</div>
-      <table className="sr-only">
+      {/* hidden from the eye, read by screen readers. The box is hidden, not the table: a hidden <table> still shows its <caption> */}
+      <div className="sr-only">
+      <table>
         <caption>{title}</caption>
         <thead>
           <tr>
@@ -38,6 +40,7 @@ export function ChartCard({ title, description, columns, rows, children }: Chart
           ))}
         </tbody>
       </table>
+      </div>
     </figure>
   )
 }

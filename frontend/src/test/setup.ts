@@ -26,7 +26,15 @@ globalThis.ResizeObserver ??= class implements ResizeObserver {
   disconnect() {}
 }
 
-beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
+/** The requests a screen sent that the fake server had no answer for, in the test that is running. */
+const unanswered: string[] = []
+
+beforeAll(() => {
+  server.listen({ onUnhandledRequest: 'error' })
+  server.events.on('request:unhandled', ({ request }) => {
+    unanswered.push(`${request.method} ${new URL(request.url).pathname}${new URL(request.url).search}`)
+  })
+})
 
 beforeEach(async () => {
   // Recharts warns once about a 0x0 box before the observer above has answered; every other warning stays visible
@@ -45,6 +53,10 @@ afterEach(async () => {
   await waitForIdle()
   cleanup()
   server.resetHandlers()
+  const missed = unanswered.splice(0)
+  if (missed.length > 0) {
+    throw new Error(`The screen sent requests that the test gave no answer to (the test ended too early, or forgot a handler): ${missed.join(' | ')}`)
+  }
 })
 
 afterAll(() => server.close())
