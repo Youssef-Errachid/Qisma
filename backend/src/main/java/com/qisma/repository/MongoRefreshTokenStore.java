@@ -46,4 +46,10 @@ public class MongoRefreshTokenStore implements RefreshTokenStore {
         Query query = new Query(Criteria.where("familyId").is(familyId).and("revokedAt").is(null));
         mongo.updateMulti(query, new Update().set("revokedAt", now), RefreshToken.class);
     }
+
+    @Override
+    public void revokeAllForUser(String userId, Instant now) {
+        Query query = new Query(Criteria.where("userId").is(userId).and("revokedAt").is(null));
+        mongo.updateMulti(query, new Update().set("revokedAt", now), RefreshToken.class);
+    }
 }

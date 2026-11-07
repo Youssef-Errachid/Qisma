@@ -19,4 +19,7 @@ public interface RefreshTokenStore {
 
     /** Revokes every still-active token of the family. */
     void revokeFamily(String familyId, Instant now);
+
+    /** Revokes every still-active token of the user, on all devices. */
+    void revokeAllForUser(String userId, Instant now);
 }

@@ -78,6 +78,11 @@ public class RefreshTokenService {
                 .ifPresent(t -> store.revokeFamily(t.getFamilyId(), clock.instant()));
     }
 
+    /** Ends every session of the user, on every device (used when the password changes). */
+    public void revokeAllForUser(String userId) {
+        store.revokeAllForUser(userId, clock.instant());
+    }
+
     private String create(String userId, String familyId) {
         String raw = TokenUtil.randomToken();
         Instant now = clock.instant();

@@ -56,6 +56,13 @@ class RefreshTokenServiceTest {
         }
 
         @Override
+        public void revokeAllForUser(String userId, Instant now) {
+            tokens.stream()
+                    .filter(t -> t.getUserId().equals(userId) && t.getRevokedAt() == null)
+                    .forEach(t -> t.setRevokedAt(now));
+        }
+
+        @Override
         public void revokeFamily(String familyId, Instant now) {
             tokens.stream()
                     .filter(t -> t.getFamilyId().equals(familyId) && t.getRevokedAt() == null)
