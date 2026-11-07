@@ -3,4 +3,6 @@ dist/
 target/
 .idea/
 *.iml
-.envbackend/src/main/resources/application-local.properties
+.env
+.env.*
+backend/src/main/resources/application-local.properties
