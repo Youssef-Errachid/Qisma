@@ -20,12 +20,17 @@ public class MongoGroupUpdateStore implements GroupUpdateStore {
     }
 
     @Override
-    public void updateDetails(String groupId, String name, String description, String currency) {
-        Update update = new Update().set("name", name).set("description", description).set("updatedAt", Instant.now());
-        if (currency != null) {
-            update.set("currency", currency);
-        }
-        mongo.updateFirst(new Query(Criteria.where("_id").is(groupId)), update.inc("version", 1), Group.class);
+    public void updateDetails(String groupId, String name, String description) {
+        Update update = new Update().set("name", name).set("description", description)
+                .set("updatedAt", Instant.now()).inc("version", 1);
+        mongo.updateFirst(new Query(Criteria.where("_id").is(groupId)), update, Group.class);
+    }
+
+    @Override
+    public boolean changeCurrency(String groupId, String currency) {
+        Query query = new Query(Criteria.where("_id").is(groupId).and("ledgerVersion").is(0L));
+        Update update = new Update().set("currency", currency).set("updatedAt", Instant.now()).inc("version", 1);
+        return mongo.updateFirst(query, update, Group.class).getModifiedCount() > 0;
     }
 
     @Override

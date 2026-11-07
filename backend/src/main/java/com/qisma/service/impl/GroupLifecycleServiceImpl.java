@@ -77,15 +77,13 @@ public class GroupLifecycleServiceImpl implements GroupLifecycleService {
         Map<String, Object> after = details(name, description, newCurrency != null ? newCurrency : group.getCurrency());
 
         tx.executeWithoutResult(status -> {
-            if (newCurrency != null) {
-                // the first financial operation of a group makes the counter 1: any later value means the
-                // group already has money in it, and a currency change would silently reinterpret every amount
-                if (ledger.advance(groupId) != 1L) {
-                    throw new ApiException(ErrorCode.CURRENCY_LOCKED,
-                            "The currency cannot change once the group has expenses or settlements");
-                }
+            // a conditional update, checked first: once the group has had any expense or settlement the currency
+            // is locked, because changing it would silently reinterpret every amount already recorded
+            if (newCurrency != null && !groups.changeCurrency(groupId, newCurrency)) {
+                throw new ApiException(ErrorCode.CURRENCY_LOCKED,
+                        "The currency cannot change once the group has expenses or settlements");
             }
-            groups.updateDetails(groupId, name, description, newCurrency);
+            groups.updateDetails(groupId, name, description);
             activity.record(groupId, userId, ActivityAction.GROUP_UPDATED, groupId, before, after);
         });
 

@@ -8,8 +8,13 @@ import java.time.Instant;
  */
 public interface GroupUpdateStore {
 
-    /** currency is only written when it is not null. */
-    void updateDetails(String groupId, String name, String description, String currency);
+    void updateDetails(String groupId, String name, String description);
+
+    /**
+     * Changes the currency only if the group never had a financial operation (ledgerVersion is still 0). It is
+     * one conditional update, so it cannot race with the first expense: returns false when nothing changed.
+     */
+    boolean changeCurrency(String groupId, String currency);
 
     void setOwner(String groupId, String ownerId);
 

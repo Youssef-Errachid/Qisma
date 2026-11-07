@@ -111,7 +111,8 @@ class GroupLifecycleServiceImplTest {
     void update_renamesTheGroup_withoutTouchingTheLedger() {
         GroupResponse r = service.update("youssef", "g1", new UpdateGroupRequest("  New name ", "  about  ", null));
 
-        verify(store).updateDetails("g1", "New name", "about", null);
+        verify(store).updateDetails("g1", "New name", "about");
+        verify(store, never()).changeCurrency(any(), any());
         verify(ledger, never()).advance(any());
         assertEquals("New name", r.name());
         assertEquals("MAD", r.currency());
@@ -133,27 +134,42 @@ class GroupLifecycleServiceImplTest {
     @Test
     void update_aBlankDescription_isStoredAsNothing() {
         service.update("youssef", "g1", new UpdateGroupRequest("House", "   ", null));
-        verify(store).updateDetails("g1", "House", null, null);
+        verify(store).updateDetails("g1", "House", null);
     }
 
     @Test
     void update_theCurrency_canChangeOnAFreshGroup() {
-        when(ledger.advance("g1")).thenReturn(1L);
+        when(store.changeCurrency("g1", "EUR")).thenReturn(true);
 
         GroupResponse r = service.update("youssef", "g1", new UpdateGroupRequest("House", null, " eur "));
 
-        verify(store).updateDetails("g1", "House", null, "EUR");
+        verify(store).changeCurrency("g1", "EUR");
+        verify(store).updateDetails("g1", "House", null);
+        verify(ledger, never()).advance(any());
         assertEquals("EUR", r.currency());
     }
 
     @Test
+    void update_theCurrency_canChangeMoreThanOnce_aslongAsThereIsNoMoney() {
+        when(store.changeCurrency(eq("g1"), any())).thenReturn(true);
+
+        service.update("youssef", "g1", new UpdateGroupRequest("House", null, "EUR"));
+        GroupResponse back = service.update("youssef", "g1", new UpdateGroupRequest("House", null, "MAD"));
+
+        verify(store).changeCurrency("g1", "EUR");
+        verify(store).changeCurrency("g1", "MAD");
+        assertEquals("MAD", back.currency());
+        verify(ledger, never()).advance(any());
+    }
+
+    @Test
     void update_theCurrency_isLockedOnceTheGroupHasHadAnyFinancialOperation() {
-        when(ledger.advance("g1")).thenReturn(7L);
+        when(store.changeCurrency("g1", "EUR")).thenReturn(false);
 
         ApiException e = failure(() -> service.update("youssef", "g1", new UpdateGroupRequest("House", null, "EUR")));
 
         assertEquals(ErrorCode.CURRENCY_LOCKED, e.getCode());
-        verify(store, never()).updateDetails(any(), any(), any(), any());
+        verify(store, never()).updateDetails(any(), any(), any());
         verify(activity, never()).record(any(), any(), any(), any(), any(), any());
     }
 
@@ -162,7 +178,8 @@ class GroupLifecycleServiceImplTest {
         service.update("youssef", "g1", new UpdateGroupRequest("House", null, " mad "));
 
         verify(ledger, never()).advance(any());
-        verify(store).updateDetails("g1", "House", null, null);
+        verify(store, never()).changeCurrency(any(), any());
+        verify(store).updateDetails("g1", "House", null);
     }
 
     @Test
@@ -171,7 +188,8 @@ class GroupLifecycleServiceImplTest {
             assertEquals(ErrorCode.VALIDATION_FAILED, failure(() ->
                     service.update("youssef", "g1", new UpdateGroupRequest("House", null, bad))).getCode(), bad);
         }
-        verify(store, never()).updateDetails(any(), any(), any(), any());
+        verify(store, never()).updateDetails(any(), any(), any());
+        verify(store, never()).changeCurrency(any(), any());
     }
 
     @Test
