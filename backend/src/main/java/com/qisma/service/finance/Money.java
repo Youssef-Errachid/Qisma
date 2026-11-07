@@ -30,7 +30,6 @@ public record Money(long minorUnits, Currency currency) implements Comparable<Mo
 
     /**
      * Converts a decimal amount (e.g. user input) to Money.
-
      * Rejects amounts with more decimals than the currency allows (10.005 MAD)
      * and amounts that do not fit in a long.
      */
@@ -64,7 +63,6 @@ public record Money(long minorUnits, Currency currency) implements Comparable<Mo
 
     // ---------- queries ----------
 
-
     public boolean isZero() {
         return minorUnits == 0L;
     }
@@ -96,7 +94,6 @@ public record Money(long minorUnits, Currency currency) implements Comparable<Mo
     private void requireSameCurrency(Money other) {
         Objects.requireNonNull(other, "other must not be null");
         if (!currency.equals(other.currency)) {
-
             throw new IllegalArgumentException(
                     "Currency mismatch: " + currency.getCurrencyCode() + " vs " + other.currency.getCurrencyCode());
         }

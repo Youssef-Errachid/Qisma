@@ -26,10 +26,10 @@ class MoneyTest {
 
     @Test
     void ofDecimal_rejectsAmountTooLargeForLong() {
+
         assertThrows(IllegalArgumentException.class,
                 () -> Money.ofDecimal(new BigDecimal("999999999999999999999.00"), MAD));
     }
-
 
     @Test
     void ofDecimal_respectsCurrencyWithZeroDecimals() {
@@ -49,7 +49,6 @@ class MoneyTest {
 
     @Test
     void add_isExact_whereDoubleIsNot() {
-        // 0.1 + 0.2 with double = 0.30000000000000004
         Money sum = Money.of(10L, "MAD").add(Money.of(20L, "MAD"));
         assertEquals(30L, sum.minorUnits());
     }
@@ -60,9 +59,9 @@ class MoneyTest {
         Money b = Money.of(200L, "MAD");
         assertEquals(300L, a.subtract(b).minorUnits());
         assertEquals(-300L, b.subtract(a).minorUnits());
+
         assertEquals(-500L, a.negate().minorUnits());
     }
-
 
     @Test
     void signQueries_areConsistent() {
@@ -93,10 +92,10 @@ class MoneyTest {
     void compareTo_ordersByAmount() {
         assertTrue(Money.of(100L, "MAD").compareTo(Money.of(200L, "MAD")) < 0);
         assertEquals(0, Money.of(100L, "MAD").compareTo(Money.of(100L, "MAD")));
+
     }
 
     @Test
-
     void equality_isValueBased() {
         assertEquals(Money.of(100L, "MAD"), Money.of(100L, "MAD"));
         assertNotEquals(Money.of(100L, "MAD"), Money.of(100L, "EUR"));
