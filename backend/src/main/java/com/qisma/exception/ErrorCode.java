@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 public enum ErrorCode {
     VALIDATION_FAILED(HttpStatus.BAD_REQUEST),
     INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED),
+    INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED),
     ACCOUNT_LOCKED(HttpStatus.LOCKED),
     EMAIL_ALREADY_USED(HttpStatus.CONFLICT),
