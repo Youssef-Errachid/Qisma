@@ -80,6 +80,15 @@ public class GlobalExceptionHandler {
                     .body(body);
         }
 
+        // two financial operations of the same group raced and this one lost: nothing was saved, retry is safe
+        if (ConcurrencyFailures.isTransientConflict(ex)) {
+            ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT,
+                    "The group was modified at the same moment. Nothing was saved, please try again");
+            problem.setTitle(ErrorCode.CONCURRENT_UPDATE.name());
+            problem.setProperty("code", ErrorCode.CONCURRENT_UPDATE.name());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(problem);
+        }
+
         log.error("Unexpected error", ex);
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(
                 HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error");
