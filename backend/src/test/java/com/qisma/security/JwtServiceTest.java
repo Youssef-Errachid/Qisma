@@ -50,7 +50,7 @@ class JwtServiceTest {
         Jwt jwt = decoder().decode(token);
         assertEquals("u1", jwt.getSubject());
         assertEquals("youssef", jwt.getClaimAsString("username"));
-        assertEquals("qisma", jwt.getIssuer().toString());
+        assertEquals("qisma", jwt.getClaimAsString("iss"));
         assertEquals(Duration.ofSeconds(900), Duration.between(jwt.getIssuedAt(), jwt.getExpiresAt()));
     }
 
