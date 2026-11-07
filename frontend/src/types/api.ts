@@ -48,6 +48,70 @@ export interface InvitationPreview {
   expiresAt: string | null
 }
 
+export const EXPENSE_CATEGORIES = [
+  'FOOD', 'ELECTRICITY', 'WATER', 'INTERNET', 'RENT', 'TRANSPORTATION', 'CLEANING', 'HOUSEHOLD', 'OTHER',
+] as const
+export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number]
+
+/** Every amount below is an integer in minor units (centimes). */
+export interface ReportSummary {
+  currency: string
+  totalExpensesMinor: number
+  expenseCount: number
+  memberCount: number
+  activeMemberCount: number
+  /** what the creditors are still owed, equal to what the debtors still owe */
+  outstandingDebtsMinor: number
+  confirmedSettlementsMinor: number
+  pendingSettlementsMinor: number
+  pendingSettlementsCount: number
+}
+
+export interface MonthlyPoint {
+  /** yyyy-MM */
+  month: string
+  totalMinor: number
+  count: number
+}
+
+export interface MonthlyReport {
+  currency: string
+  from: string
+  to: string
+  months: MonthlyPoint[]
+}
+
+export interface CategoryItem {
+  category: ExpenseCategory
+  totalMinor: number
+  count: number
+  /** share of the total in basis points (10000 = 100%), rounded, for display only */
+  shareBp: number
+}
+
+export interface CategoryReport {
+  currency: string
+  from: string | null
+  to: string | null
+  totalMinor: number
+  categories: CategoryItem[]
+}
+
+export interface MemberContribution {
+  userId: string
+  username: string
+  fullName: string
+  paidMinor: number
+  shareMinor: number
+}
+
+export interface ContributionsReport {
+  currency: string
+  from: string | null
+  to: string | null
+  members: MemberContribution[]
+}
+
 export interface LoginRequest {
   email: string
   password: string

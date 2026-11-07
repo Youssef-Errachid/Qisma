@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react'
 import { HttpResponse, http } from 'msw'
 import { describe, expect, it } from 'vitest'
-import { API, asSignedIn, group, groupIs, groupsAre, problem } from '@/test/fixtures'
+import { API, asSignedIn, group, groupIs, groupsAre, problem, reportsAre } from '@/test/fixtures'
 import { server } from '@/test/server'
 import { renderApp } from '@/test/utils'
 
@@ -51,6 +51,7 @@ describe('GroupLayout and the overview', () => {
   it('offers to try again when the group could not be loaded', async () => {
     asSignedIn()
     server.use(http.get(`${API}/groups/g1`, () => problem(500, 'INTERNAL_ERROR')))
+    reportsAre('g1')
     const { user } = renderApp('/groups/g1')
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong')
