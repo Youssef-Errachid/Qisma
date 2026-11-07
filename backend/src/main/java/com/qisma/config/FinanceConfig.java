@@ -1,5 +1,6 @@
 package com.qisma.config;
 
+import com.qisma.service.finance.BalanceCalculator;
 import com.qisma.service.finance.SplitStrategyFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,5 +12,10 @@ public class FinanceConfig {
     @Bean
     SplitStrategyFactory splitStrategyFactory() {
         return new SplitStrategyFactory();
+    }
+
+    @Bean
+    BalanceCalculator balanceCalculator() {
+        return new BalanceCalculator();
     }
 }
