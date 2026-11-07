@@ -7,7 +7,12 @@ public enum ActivityAction {
     SETTLEMENT_CREATED(ActivityEntityType.SETTLEMENT),
     SETTLEMENT_CONFIRMED(ActivityEntityType.SETTLEMENT),
     SETTLEMENT_REJECTED(ActivityEntityType.SETTLEMENT),
-    SETTLEMENT_CANCELLED(ActivityEntityType.SETTLEMENT);
+    SETTLEMENT_CANCELLED(ActivityEntityType.SETTLEMENT),
+    GROUP_UPDATED(ActivityEntityType.GROUP),
+    GROUP_ARCHIVED(ActivityEntityType.GROUP),
+    OWNERSHIP_TRANSFERRED(ActivityEntityType.GROUP),
+    MEMBER_LEFT(ActivityEntityType.MEMBERSHIP),
+    MEMBER_DEACTIVATED(ActivityEntityType.MEMBERSHIP);
 
     private final ActivityEntityType entityType;
 

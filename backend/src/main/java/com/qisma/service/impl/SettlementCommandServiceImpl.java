@@ -75,7 +75,7 @@ public class SettlementCommandServiceImpl implements SettlementCommandService {
     @Override
     public SettlementResult create(String userId, String groupId, String idempotencyKey,
                                    CreateSettlementRequest request) {
-        GroupAccessGuard.Access access = guard.forWrite(groupId, userId);
+        GroupAccessGuard.Access access = guard.forSettle(groupId, userId);
 
         String toUserId = request.toUserId().trim();
         if (toUserId.equals(userId)) {
@@ -163,7 +163,7 @@ public class SettlementCommandServiceImpl implements SettlementCommandService {
 
     @Override
     public SettlementResponse confirm(String userId, String groupId, String settlementId) {
-        guard.forWrite(groupId, userId);
+        guard.forSettle(groupId, userId);
         Settlement current = load(groupId, settlementId);
         requireReceiver(current, userId, "confirm");
         requirePending(current);
@@ -182,7 +182,7 @@ public class SettlementCommandServiceImpl implements SettlementCommandService {
 
     @Override
     public SettlementResponse reject(String userId, String groupId, String settlementId, String reason) {
-        guard.forWrite(groupId, userId);
+        guard.forSettle(groupId, userId);
         Settlement current = load(groupId, settlementId);
         requireReceiver(current, userId, "reject");
         requirePending(current);
@@ -202,7 +202,7 @@ public class SettlementCommandServiceImpl implements SettlementCommandService {
 
     @Override
     public SettlementResponse cancel(String userId, String groupId, String settlementId) {
-        guard.forWrite(groupId, userId);
+        guard.forSettle(groupId, userId);
         Settlement current = load(groupId, settlementId);
         if (!userId.equals(current.getFromUserId())) {
             throw new ApiException(ErrorCode.FORBIDDEN, "Only the sender can cancel a settlement");

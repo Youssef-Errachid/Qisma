@@ -80,7 +80,7 @@ class SettlementCommandServiceImplTest {
         group.setCurrency("MAD");
         for (String id : List.of("youssef", "ahmed", "hamza")) {
             GroupRole role = id.equals("youssef") ? GroupRole.OWNER : GroupRole.MEMBER;
-            when(guard.forWrite("g1", id)).thenReturn(new GroupAccessGuard.Access(group,
+            when(guard.forSettle("g1", id)).thenReturn(new GroupAccessGuard.Access(group,
                     new Membership("g1", id, role, NOW)));
             when(memberships.findByGroupIdAndUserId("g1", id))
                     .thenReturn(Optional.of(new Membership("g1", id, role, NOW)));
@@ -247,7 +247,7 @@ class SettlementCommandServiceImplTest {
 
     @Test
     void create_byANonMember_isRejectedByTheGuard_andNothingIsTouched() {
-        when(guard.forWrite("g1", "stranger")).thenThrow(new ApiException(ErrorCode.NOT_FOUND, "Group not found"));
+        when(guard.forSettle("g1", "stranger")).thenThrow(new ApiException(ErrorCode.NOT_FOUND, "Group not found"));
 
         assertThrows(ApiException.class, () -> service.create("stranger", "g1", null, request("youssef", 100)));
         verifyNoInteractions(settlements, ledger, ledgerService, activity, transitions);
@@ -399,7 +399,7 @@ class SettlementCommandServiceImplTest {
 
     @Test
     void confirm_byANonMember_isRejectedByTheGuard() {
-        when(guard.forWrite("g1", "stranger")).thenThrow(new ApiException(ErrorCode.NOT_FOUND, "Group not found"));
+        when(guard.forSettle("g1", "stranger")).thenThrow(new ApiException(ErrorCode.NOT_FOUND, "Group not found"));
 
         assertThrows(ApiException.class, () -> service.confirm("stranger", "g1", "s1"));
         verifyNoInteractions(settlements, transitions, ledger);

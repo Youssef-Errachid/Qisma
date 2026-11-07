@@ -14,6 +14,12 @@ import org.springframework.stereotype.Component;
 /**
  * The single place that decides who may touch a group. Every group operation goes through it.
  * Non-members always get 404, so the existence of a group is never revealed.
+ *
+ * Levels, from the loosest:
+ * - forRead:   any member, even one who left or of an archived group (they keep seeing their own data);
+ * - forSettle: any member of a group that is not archived, so a member who left can still settle what is left;
+ * - forWrite:  an ACTIVE member of a group that is not archived (expenses, invitations);
+ * - forOwner:  the group owner.
  */
 @Component
 public class GroupAccessGuard {
@@ -29,17 +35,14 @@ public class GroupAccessGuard {
         this.memberships = memberships;
     }
 
-    /** Reading: any active member, even of an archived group. */
     public Access forRead(String groupId, String userId) {
-        Membership membership = memberships
-                .findByGroupIdAndUserIdAndStatus(groupId, userId, MembershipStatus.ACTIVE)
+        Membership membership = memberships.findByGroupIdAndUserId(groupId, userId)
                 .orElseThrow(GroupAccessGuard::notFound);
         Group group = groups.findById(groupId).orElseThrow(GroupAccessGuard::notFound);
         return new Access(group, membership);
     }
 
-    /** Writing: an active member of an ACTIVE group. */
-    public Access forWrite(String groupId, String userId) {
+    public Access forSettle(String groupId, String userId) {
         Access access = forRead(groupId, userId);
         if (access.group().getStatus() != GroupStatus.ACTIVE) {
             throw new ApiException(ErrorCode.GROUP_ARCHIVED, "This group is archived");
@@ -47,7 +50,15 @@ public class GroupAccessGuard {
         return access;
     }
 
-    /** Owner-only operations. */
+    public Access forWrite(String groupId, String userId) {
+        Access access = forSettle(groupId, userId);
+        if (access.membership().getStatus() != MembershipStatus.ACTIVE) {
+            throw new ApiException(ErrorCode.FORBIDDEN,
+                    "You are no longer an active member: you can only settle what is left");
+        }
+        return access;
+    }
+
     public Access forOwner(String groupId, String userId) {
         Access access = forWrite(groupId, userId);
         if (access.membership().getRole() != GroupRole.OWNER) {

@@ -2,5 +2,7 @@ package com.qisma.enums;
 
 public enum ActivityEntityType {
     EXPENSE,
-    SETTLEMENT
+    SETTLEMENT,
+    GROUP,
+    MEMBERSHIP
 }
