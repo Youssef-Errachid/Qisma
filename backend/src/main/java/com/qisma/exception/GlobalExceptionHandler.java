@@ -2,6 +2,7 @@ package com.qisma.exception;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -56,6 +57,16 @@ public class GlobalExceptionHandler {
         problem.setTitle(ErrorCode.VALIDATION_FAILED.name());
         problem.setProperty("code", ErrorCode.VALIDATION_FAILED.name());
         return ResponseEntity.badRequest().body(problem);
+    }
+
+    /** Someone saved the same document between our read and our write. */
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    ResponseEntity<ProblemDetail> handleOptimisticLock(OptimisticLockingFailureException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT,
+                "The resource was changed by someone else. Reload it and try again");
+        problem.setTitle(ErrorCode.VERSION_CONFLICT.name());
+        problem.setProperty("code", ErrorCode.VERSION_CONFLICT.name());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(problem);
     }
 
     @ExceptionHandler(Exception.class)

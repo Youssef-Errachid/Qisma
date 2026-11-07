@@ -1,95 +1,63 @@
 package com.qisma.service.impl;
 
 import com.qisma.dto.request.CreateExpenseRequest;
+import com.qisma.dto.request.UpdateExpenseRequest;
 import com.qisma.dto.response.ExpenseResponse;
+import com.qisma.enums.ActivityAction;
 import com.qisma.enums.ExpenseStatus;
-import com.qisma.enums.MembershipStatus;
+import com.qisma.enums.GroupRole;
 import com.qisma.exception.ApiException;
 import com.qisma.exception.ErrorCode;
 import com.qisma.mapper.ExpenseMapper;
 import com.qisma.model.Expense;
 import com.qisma.model.ExpenseShare;
-import com.qisma.model.Membership;
 import com.qisma.repository.ExpenseRepository;
 import com.qisma.repository.GroupLedgerStore;
-import com.qisma.repository.MembershipRepository;
 import com.qisma.security.GroupAccessGuard;
+import com.qisma.service.ActivityLogService;
 import com.qisma.service.ExpenseService;
-import com.qisma.service.finance.InvalidSplitException;
-import com.qisma.service.finance.Money;
-import com.qisma.service.finance.ShareAllocation;
-import com.qisma.service.finance.ShareInput;
-import com.qisma.service.finance.SplitStrategyFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.Objects;
 
 @Service
 public class ExpenseServiceImpl implements ExpenseService {
 
     private final ExpenseRepository expenses;
-    private final MembershipRepository memberships;
     private final GroupAccessGuard guard;
-    private final SplitStrategyFactory splitFactory;
+    private final ExpenseAllocator allocator;
     private final GroupLedgerStore ledger;
+    private final ActivityLogService activity;
     private final ExpenseMapper mapper;
     private final Clock clock;
 
-    public ExpenseServiceImpl(ExpenseRepository expenses, MembershipRepository memberships,
-                              GroupAccessGuard guard, SplitStrategyFactory splitFactory,
-                              GroupLedgerStore ledger, ExpenseMapper mapper, Clock clock) {
+    public ExpenseServiceImpl(ExpenseRepository expenses, GroupAccessGuard guard, ExpenseAllocator allocator,
+                              GroupLedgerStore ledger, ActivityLogService activity,
+                              ExpenseMapper mapper, Clock clock) {
         this.expenses = expenses;
-        this.memberships = memberships;
         this.guard = guard;
-        this.splitFactory = splitFactory;
+        this.allocator = allocator;
         this.ledger = ledger;
+        this.activity = activity;
         this.mapper = mapper;
         this.clock = clock;
     }
 
     /**
-     * The server computes every share itself; the client never sends a final share for EQUAL splits and
-     * its figures for CUSTOM/PERCENTAGE are validated against the total. Saved in one transaction together
-     * with the group's ledgerVersion bump.
+     * The server computes every share itself. The expense, the group's ledgerVersion bump and the history
+     * line are saved in ONE transaction.
      */
     @Override
     @Transactional
     public ExpenseResponse create(String userId, String groupId, CreateExpenseRequest request) {
         GroupAccessGuard.Access access = guard.forWrite(groupId, userId);
         String currency = access.group().getCurrency();
-
-        if (request.currency() != null && !request.currency().trim().equalsIgnoreCase(currency)) {
-            throw new ApiException(ErrorCode.VALIDATION_FAILED, "Expense currency must be " + currency);
-        }
-
-        Set<String> activeMembers = memberships.findByGroupIdAndStatus(groupId, MembershipStatus.ACTIVE).stream()
-                .map(Membership::getUserId)
-                .collect(Collectors.toSet());
-
-        if (!activeMembers.contains(request.paidBy())) {
-            throw new ApiException(ErrorCode.PARTICIPANT_NOT_MEMBER, "The payer is not an active member of this group");
-        }
-        request.participants().forEach(p -> {
-            if (!activeMembers.contains(p.userId())) {
-                throw new ApiException(ErrorCode.PARTICIPANT_NOT_MEMBER,
-                        "A participant is not an active member of this group");
-            }
-        });
-
-        List<ShareAllocation> allocations;
-        try {
-            List<ShareInput> inputs = request.participants().stream()
-                    .map(p -> new ShareInput(p.userId(), p.shareMinor(), p.percentageBp()))
-                    .toList();
-            allocations = splitFactory.forMethod(request.splitMethod())
-                    .allocate(Money.of(request.amountMinor(), currency), inputs);
-        } catch (InvalidSplitException e) {
-            throw new ApiException(ErrorCode.INVALID_SPLIT, e.getMessage());
-        }
+        List<ExpenseShare> shares = allocator.allocate(groupId, currency, request);
 
         Expense expense = new Expense();
         expense.setGroupId(groupId);
@@ -100,9 +68,7 @@ public class ExpenseServiceImpl implements ExpenseService {
         expense.setPaidBy(request.paidBy());
         expense.setCategory(request.category());
         expense.setSplitMethod(request.splitMethod());
-        expense.setShares(allocations.stream()
-                .map(a -> new ExpenseShare(a.userId(), a.shareMinor(), a.percentageBp()))
-                .toList());
+        expense.setShares(shares);
         expense.setExpenseDate(request.expenseDate());
         expense.setStatus(ExpenseStatus.ACTIVE);
         expense.setCreatedBy(userId);
@@ -110,7 +76,81 @@ public class ExpenseServiceImpl implements ExpenseService {
 
         Expense saved = expenses.save(expense);
         ledger.advance(groupId);
+        activity.record(groupId, userId, ActivityAction.EXPENSE_CREATED, saved.getId(),
+                null, ExpenseSnapshots.of(saved));
         return mapper.toResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public ExpenseResponse update(String userId, String groupId, String expenseId, UpdateExpenseRequest request) {
+        GroupAccessGuard.Access access = guard.forWrite(groupId, userId);
+        Expense expense = loadActive(groupId, expenseId);
+        requireCanModify(access, expense, userId);
+
+        if (!Objects.equals(request.version(), expense.getVersion())) {
+            throw new ApiException(ErrorCode.VERSION_CONFLICT,
+                    "The expense was changed by someone else. Reload it and try again");
+        }
+
+        List<ExpenseShare> shares = allocator.allocate(groupId, access.group().getCurrency(),
+                request.toCreateRequest());
+
+        Map<String, Object> before = ExpenseSnapshots.of(expense);
+        expense.setTitle(request.title().trim());
+        expense.setDescription(blankToNull(request.description()));
+        expense.setAmountMinor(request.amountMinor());
+        expense.setPaidBy(request.paidBy());
+        expense.setCategory(request.category());
+        expense.setSplitMethod(request.splitMethod());
+        expense.setShares(shares);
+        expense.setExpenseDate(request.expenseDate());
+        expense.setUpdatedBy(userId);
+        expense.setUpdatedAt(clock.instant());
+
+        // a concurrent change between the load and this save makes the @Version check fail (409)
+        Expense saved = expenses.save(expense);
+        ledger.advance(groupId);
+        activity.record(groupId, userId, ActivityAction.EXPENSE_UPDATED, saved.getId(),
+                before, ExpenseSnapshots.of(saved));
+        return mapper.toResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public void delete(String userId, String groupId, String expenseId) {
+        GroupAccessGuard.Access access = guard.forWrite(groupId, userId);
+        Expense expense = loadActive(groupId, expenseId);
+        requireCanModify(access, expense, userId);
+
+        Map<String, Object> before = ExpenseSnapshots.of(expense);
+        Instant now = clock.instant();
+        expense.setStatus(ExpenseStatus.DELETED);
+        expense.setDeletedBy(userId);
+        expense.setDeletedAt(now);
+        expense.setUpdatedBy(userId);
+        expense.setUpdatedAt(now);
+
+        Expense saved = expenses.save(expense);
+        ledger.advance(groupId);
+        activity.record(groupId, userId, ActivityAction.EXPENSE_DELETED, saved.getId(),
+                before, ExpenseSnapshots.of(saved));
+    }
+
+    private Expense loadActive(String groupId, String expenseId) {
+        return expenses.findByIdAndGroupId(expenseId, groupId)
+                .filter(e -> e.getStatus() == ExpenseStatus.ACTIVE)
+                .orElseThrow(() -> new ApiException(ErrorCode.NOT_FOUND, "Expense not found"));
+    }
+
+    /** The creator and the group owner (as moderator) may change an expense; other members may not. */
+    private static void requireCanModify(GroupAccessGuard.Access access, Expense expense, String userId) {
+        boolean isCreator = userId.equals(expense.getCreatedBy());
+        boolean isOwner = access.membership().getRole() == GroupRole.OWNER;
+        if (!isCreator && !isOwner) {
+            throw new ApiException(ErrorCode.FORBIDDEN,
+                    "Only the creator of the expense or the group owner can change it");
+        }
     }
 
     private static String blankToNull(String value) {

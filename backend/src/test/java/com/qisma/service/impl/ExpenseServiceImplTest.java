@@ -2,7 +2,9 @@ package com.qisma.service.impl;
 
 import com.qisma.dto.request.CreateExpenseRequest;
 import com.qisma.dto.request.ParticipantInput;
+import com.qisma.dto.request.UpdateExpenseRequest;
 import com.qisma.dto.response.ExpenseResponse;
+import com.qisma.enums.ActivityAction;
 import com.qisma.enums.ExpenseCategory;
 import com.qisma.enums.ExpenseStatus;
 import com.qisma.enums.GroupRole;
@@ -19,6 +21,7 @@ import com.qisma.repository.ExpenseRepository;
 import com.qisma.repository.GroupLedgerStore;
 import com.qisma.repository.MembershipRepository;
 import com.qisma.security.GroupAccessGuard;
+import com.qisma.service.ActivityLogService;
 import com.qisma.service.finance.SplitStrategyFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,12 +32,17 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.*;
 
+@SuppressWarnings({"unchecked", "rawtypes"})
 class ExpenseServiceImplTest {
 
     private static final Instant NOW = Instant.parse("2026-11-07T12:00:00Z");
@@ -43,7 +51,9 @@ class ExpenseServiceImplTest {
     private MembershipRepository memberships;
     private GroupAccessGuard guard;
     private GroupLedgerStore ledger;
+    private ActivityLogService activity;
     private ExpenseServiceImpl service;
+    private Group group;
 
     @BeforeEach
     void setUp() {
@@ -51,14 +61,18 @@ class ExpenseServiceImplTest {
         memberships = mock(MembershipRepository.class);
         guard = mock(GroupAccessGuard.class);
         ledger = mock(GroupLedgerStore.class);
-        service = new ExpenseServiceImpl(expenses, memberships, guard, new SplitStrategyFactory(),
-                ledger, new ExpenseMapper(), Clock.fixed(NOW, ZoneOffset.UTC));
+        activity = mock(ActivityLogService.class);
+        service = new ExpenseServiceImpl(expenses, guard,
+                new ExpenseAllocator(memberships, new SplitStrategyFactory()),
+                ledger, activity, new ExpenseMapper(), Clock.fixed(NOW, ZoneOffset.UTC));
 
-        Group group = new Group();
+        group = new Group();
         group.setId("g1");
         group.setCurrency("MAD");
-        when(guard.forWrite("g1", "youssef")).thenReturn(new GroupAccessGuard.Access(group,
-                new Membership("g1", "youssef", GroupRole.MEMBER, NOW)));
+        actsAs("youssef", GroupRole.MEMBER);
+        actsAs("ahmed", GroupRole.MEMBER);
+        actsAs("hamza", GroupRole.MEMBER);
+        actsAs("boss", GroupRole.OWNER);
 
         when(memberships.findByGroupIdAndStatus("g1", MembershipStatus.ACTIVE)).thenReturn(List.of(
                 new Membership("g1", "youssef", GroupRole.OWNER, NOW),
@@ -67,9 +81,16 @@ class ExpenseServiceImplTest {
 
         when(expenses.save(any(Expense.class))).thenAnswer(inv -> {
             Expense e = inv.getArgument(0);
-            e.setId("e1");
+            if (e.getId() == null) {
+                e.setId("e1");
+            }
             return e;
         });
+    }
+
+    private void actsAs(String userId, GroupRole role) {
+        when(guard.forWrite("g1", userId)).thenReturn(new GroupAccessGuard.Access(group,
+                new Membership("g1", userId, role, NOW)));
     }
 
     private static ParticipantInput equal(String userId) {
@@ -104,8 +125,11 @@ class ExpenseServiceImplTest {
         ErrorCode code = assertThrows(ApiException.class, () -> service.create("youssef", "g1", request)).getCode();
         verify(expenses, never()).save(any());
         verify(ledger, never()).advance(any());
+        verify(activity, never()).record(any(), any(), any(), any(), any(), any());
         return code;
     }
+
+    // ======================= create =======================
 
     @Test
     void equalSplit_cahierExample_300MadBetweenThree() {
@@ -121,6 +145,16 @@ class ExpenseServiceImplTest {
         assertEquals(ExpenseStatus.ACTIVE, e.getStatus());
         assertEquals("e1", r.id());
         assertEquals(3, r.shares().size());
+    }
+
+    @Test
+    void create_recordsTheCreationInTheHistory_withoutAnOldValue() {
+        service.create("youssef", "g1", request("youssef", 1000, SplitMethod.EQUAL, equal("youssef")));
+
+        ArgumentCaptor<Map> after = ArgumentCaptor.forClass(Map.class);
+        verify(activity).record(eq("g1"), eq("youssef"), eq(ActivityAction.EXPENSE_CREATED), eq("e1"),
+                isNull(), after.capture());
+        assertEquals(1000L, after.getValue().get("amountMinor"));
     }
 
     @Test
@@ -227,7 +261,7 @@ class ExpenseServiceImplTest {
                 request("youssef", 1000, SplitMethod.EQUAL, equal("youssef"))));
 
         assertEquals(ErrorCode.NOT_FOUND, e.getCode());
-        verifyNoInteractions(expenses, ledger);
+        verifyNoInteractions(expenses, ledger, activity);
     }
 
     @Test
@@ -259,5 +293,216 @@ class ExpenseServiceImplTest {
             Expense e = saved();
             assertEquals(amount, e.getShares().stream().mapToLong(ExpenseShare::shareMinor).sum(), "round " + round);
         }
+    }
+
+    // ======================= update =======================
+
+    private Expense existing(String createdBy, ExpenseStatus status) {
+        Expense e = new Expense();
+        e.setId("e1");
+        e.setGroupId("g1");
+        e.setTitle("Old title");
+        e.setAmountMinor(30000);
+        e.setCurrency("MAD");
+        e.setPaidBy("youssef");
+        e.setCategory(ExpenseCategory.FOOD);
+        e.setSplitMethod(SplitMethod.EQUAL);
+        e.setShares(List.of(new ExpenseShare("youssef", 10000, null),
+                new ExpenseShare("ahmed", 10000, null), new ExpenseShare("hamza", 10000, null)));
+        e.setExpenseDate(LocalDate.parse("2026-11-07"));
+        e.setStatus(status);
+        e.setCreatedBy(createdBy);
+        e.setVersion(3L);
+        when(expenses.findByIdAndGroupId("e1", "g1")).thenReturn(Optional.of(e));
+        return e;
+    }
+
+    private static UpdateExpenseRequest update(Long version, String paidBy, long amount, SplitMethod method,
+                                               ParticipantInput... participants) {
+        return new UpdateExpenseRequest(version, "  New title ", " note ", amount, null, paidBy,
+                LocalDate.parse("2026-11-08"), ExpenseCategory.RENT, method, List.of(participants));
+    }
+
+    private ErrorCode updateFailure(String actor, UpdateExpenseRequest request) {
+        ErrorCode code = assertThrows(ApiException.class, () -> service.update(actor, "g1", "e1", request)).getCode();
+        verify(expenses, never()).save(any());
+        verify(ledger, never()).advance(any());
+        verify(activity, never()).record(any(), any(), any(), any(), any(), any());
+        return code;
+    }
+
+    @Test
+    void update_theCreator_recomputesTheShares_andRecordsOldAndNewValues() {
+        Expense e = existing("youssef", ExpenseStatus.ACTIVE);
+
+        ExpenseResponse r = service.update("youssef", "g1", "e1",
+                update(3L, "ahmed", 45000, SplitMethod.EQUAL, equal("youssef"), equal("ahmed")));
+
+        assertEquals("New title", e.getTitle());
+        assertEquals("note", e.getDescription());
+        assertEquals(45000L, e.getAmountMinor());
+        assertEquals("ahmed", e.getPaidBy());
+        assertEquals(ExpenseCategory.RENT, e.getCategory());
+        assertEquals(LocalDate.parse("2026-11-08"), e.getExpenseDate());
+        assertEquals(List.of(22500L, 22500L), shares(e));
+        assertEquals("youssef", e.getUpdatedBy());
+        assertEquals(NOW, e.getUpdatedAt());
+        assertEquals("youssef", e.getCreatedBy());
+        assertEquals("e1", r.id());
+
+        ArgumentCaptor<Map> before = ArgumentCaptor.forClass(Map.class);
+        ArgumentCaptor<Map> after = ArgumentCaptor.forClass(Map.class);
+        verify(activity).record(eq("g1"), eq("youssef"), eq(ActivityAction.EXPENSE_UPDATED), eq("e1"),
+                before.capture(), after.capture());
+        assertEquals(30000L, before.getValue().get("amountMinor"));
+        assertEquals("Old title", before.getValue().get("title"));
+        assertEquals(3, ((List) before.getValue().get("shares")).size());
+        assertEquals(45000L, after.getValue().get("amountMinor"));
+        assertEquals(2, ((List) after.getValue().get("shares")).size());
+        verify(ledger, times(1)).advance("g1");
+    }
+
+    @Test
+    void update_theGroupOwner_mayModerateSomeoneElsesExpense() {
+        Expense e = existing("youssef", ExpenseStatus.ACTIVE);
+
+        service.update("boss", "g1", "e1", update(3L, "youssef", 30000, SplitMethod.EQUAL,
+                equal("youssef"), equal("ahmed"), equal("hamza")));
+
+        assertEquals("boss", e.getUpdatedBy());
+        assertEquals("youssef", e.getCreatedBy());
+    }
+
+    @Test
+    void update_anotherOrdinaryMember_isForbidden() {
+        existing("youssef", ExpenseStatus.ACTIVE);
+
+        assertEquals(ErrorCode.FORBIDDEN, updateFailure("ahmed",
+                update(3L, "youssef", 30000, SplitMethod.EQUAL, equal("youssef"))));
+    }
+
+    @Test
+    void update_withAStaleVersion_isAConflict_andChangesNothing() {
+        Expense e = existing("youssef", ExpenseStatus.ACTIVE);
+
+        assertEquals(ErrorCode.VERSION_CONFLICT, updateFailure("youssef",
+                update(2L, "youssef", 99999, SplitMethod.EQUAL, equal("youssef"))));
+
+        assertEquals(30000L, e.getAmountMinor());
+        assertEquals("Old title", e.getTitle());
+    }
+
+    @Test
+    void update_aDeletedOrUnknownExpense_isNotFound() {
+        existing("youssef", ExpenseStatus.DELETED);
+        assertEquals(ErrorCode.NOT_FOUND, updateFailure("youssef",
+                update(3L, "youssef", 1000, SplitMethod.EQUAL, equal("youssef"))));
+
+        when(expenses.findByIdAndGroupId("e1", "g1")).thenReturn(Optional.empty());
+        assertEquals(ErrorCode.NOT_FOUND, updateFailure("youssef",
+                update(3L, "youssef", 1000, SplitMethod.EQUAL, equal("youssef"))));
+    }
+
+    @Test
+    void update_withAnInvalidSplit_isRejected_andLeavesTheExpenseUntouched() {
+        Expense e = existing("youssef", ExpenseStatus.ACTIVE);
+
+        assertEquals(ErrorCode.INVALID_SPLIT, updateFailure("youssef", update(3L, "youssef", 30000,
+                SplitMethod.CUSTOM, custom("youssef", 15000), custom("ahmed", 10000))));
+
+        assertEquals(30000L, e.getAmountMinor());
+        assertEquals(3, e.getShares().size());
+        assertEquals("Old title", e.getTitle());
+    }
+
+    @Test
+    void update_toAPayerWhoLeftTheGroup_isRejected() {
+        existing("youssef", ExpenseStatus.ACTIVE);
+
+        assertEquals(ErrorCode.PARTICIPANT_NOT_MEMBER, updateFailure("youssef",
+                update(3L, "gone", 1000, SplitMethod.EQUAL, equal("youssef"))));
+    }
+
+    @Test
+    void update_inAnArchivedGroup_isRejectedByTheGuard() {
+        existing("youssef", ExpenseStatus.ACTIVE);
+        when(guard.forWrite("g1", "youssef")).thenThrow(new ApiException(ErrorCode.GROUP_ARCHIVED, "archived"));
+
+        assertEquals(ErrorCode.GROUP_ARCHIVED, updateFailure("youssef",
+                update(3L, "youssef", 1000, SplitMethod.EQUAL, equal("youssef"))));
+    }
+
+    @Test
+    void update_byAStranger_isNotFound_andNothingIsRead() {
+        when(guard.forWrite("g1", "stranger")).thenThrow(new ApiException(ErrorCode.NOT_FOUND, "Group not found"));
+
+        assertThrows(ApiException.class, () -> service.update("stranger", "g1", "e1",
+                update(3L, "youssef", 1000, SplitMethod.EQUAL, equal("youssef"))));
+        verifyNoInteractions(expenses, ledger, activity);
+    }
+
+    // ======================= delete =======================
+
+    @Test
+    void delete_theCreator_marksItDeleted_andKeepsTheDataForTheHistory() {
+        Expense e = existing("youssef", ExpenseStatus.ACTIVE);
+
+        service.delete("youssef", "g1", "e1");
+
+        assertEquals(ExpenseStatus.DELETED, e.getStatus());
+        assertEquals("youssef", e.getDeletedBy());
+        assertEquals(NOW, e.getDeletedAt());
+        assertEquals(30000L, e.getAmountMinor());
+        assertEquals(3, e.getShares().size());
+        verify(expenses).save(e);
+        verify(expenses, never()).delete(any());
+        verify(expenses, never()).deleteById(any());
+        verify(ledger, times(1)).advance("g1");
+
+        ArgumentCaptor<Map> before = ArgumentCaptor.forClass(Map.class);
+        ArgumentCaptor<Map> after = ArgumentCaptor.forClass(Map.class);
+        verify(activity).record(eq("g1"), eq("youssef"), eq(ActivityAction.EXPENSE_DELETED), eq("e1"),
+                before.capture(), after.capture());
+        assertEquals("ACTIVE", before.getValue().get("status"));
+        assertEquals("DELETED", after.getValue().get("status"));
+    }
+
+    @Test
+    void delete_theGroupOwner_mayRemoveSomeoneElsesExpense() {
+        Expense e = existing("youssef", ExpenseStatus.ACTIVE);
+
+        service.delete("boss", "g1", "e1");
+
+        assertEquals(ExpenseStatus.DELETED, e.getStatus());
+        assertEquals("boss", e.getDeletedBy());
+    }
+
+    @Test
+    void delete_anotherOrdinaryMember_isForbidden() {
+        Expense e = existing("youssef", ExpenseStatus.ACTIVE);
+
+        assertEquals(ErrorCode.FORBIDDEN,
+                assertThrows(ApiException.class, () -> service.delete("ahmed", "g1", "e1")).getCode());
+
+        assertEquals(ExpenseStatus.ACTIVE, e.getStatus());
+        verify(expenses, never()).save(any());
+        verify(ledger, never()).advance(any());
+    }
+
+    @Test
+    void delete_anAlreadyDeletedExpense_isNotFound_andNotLoggedTwice() {
+        existing("youssef", ExpenseStatus.DELETED);
+
+        assertEquals(ErrorCode.NOT_FOUND,
+                assertThrows(ApiException.class, () -> service.delete("youssef", "g1", "e1")).getCode());
+        verify(activity, never()).record(any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void delete_byAStranger_isNotFound_andNothingIsRead() {
+        when(guard.forWrite("g1", "stranger")).thenThrow(new ApiException(ErrorCode.NOT_FOUND, "Group not found"));
+
+        assertThrows(ApiException.class, () -> service.delete("stranger", "g1", "e1"));
+        verifyNoInteractions(expenses, ledger, activity);
     }
 }

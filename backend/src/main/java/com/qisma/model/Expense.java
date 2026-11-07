@@ -102,4 +102,5 @@ public class Expense {
     public void setDeletedAt(Instant deletedAt) { this.deletedAt = deletedAt; }
 
     public Long getVersion() { return version; }
+    public void setVersion(Long version) { this.version = version; }
 }

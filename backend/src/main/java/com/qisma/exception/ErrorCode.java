@@ -17,6 +17,7 @@ public enum ErrorCode {
     GROUP_ARCHIVED(HttpStatus.CONFLICT),
     ALREADY_MEMBER(HttpStatus.CONFLICT),
     INVITATION_NOT_PENDING(HttpStatus.CONFLICT),
+    VERSION_CONFLICT(HttpStatus.CONFLICT),
     LIMIT_REACHED(HttpStatus.valueOf(422)),
     INVALID_SPLIT(HttpStatus.valueOf(422)),
     PARTICIPANT_NOT_MEMBER(HttpStatus.valueOf(422)),
