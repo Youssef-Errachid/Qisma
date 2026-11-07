@@ -3,6 +3,8 @@ import { AppLayout } from '@/components/layout/AppLayout'
 import { AuthLayout } from '@/components/layout/AuthLayout'
 import { GroupLayout } from '@/components/layout/GroupLayout'
 import { CreateGroupPage } from '@/pages/CreateGroupPage'
+import { ExpenseDetailPage } from '@/pages/ExpenseDetailPage'
+import { ExpensesPage } from '@/pages/ExpensesPage'
 import { GroupDashboardPage } from '@/pages/GroupDashboardPage'
 import { GroupsPage } from '@/pages/GroupsPage'
 import { JoinGroupPage } from '@/pages/JoinGroupPage'
@@ -34,7 +36,11 @@ export const appRoutes: RouteObject[] = [
           { path: '/', element: <Navigate to="/groups" replace /> },
           { path: '/groups', element: <GroupsPage /> },
           { path: '/groups/new', element: <CreateGroupPage /> },
-          { path: '/groups/:groupId', element: <GroupLayout />, children: [{ index: true, element: <GroupDashboardPage /> }] },
+          { path: '/groups/:groupId', element: <GroupLayout />, children: [
+              { index: true, element: <GroupDashboardPage /> },
+              { path: 'expenses', element: <ExpensesPage /> },
+              { path: 'expenses/:expenseId', element: <ExpenseDetailPage /> },
+            ] },
           { path: '/join', element: <JoinGroupPage /> },
           { path: '/join/:secret', element: <JoinGroupPage /> },
         ],

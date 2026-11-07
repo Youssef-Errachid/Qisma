@@ -1,5 +1,6 @@
 import { Link, Outlet, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { GroupTabs } from '@/components/layout/GroupTabs'
 import { Badge } from '@/components/ui/Badge'
 import { LoadingState, QueryErrorState } from '@/components/ui/StateViews'
 import { useGroup } from '@/features/groups/queries'
@@ -43,6 +44,7 @@ export function GroupLayout() {
           {data.status === 'ARCHIVED' && <Badge tone="warning">{t('groups.status.ARCHIVED')}</Badge>}
         </div>
       </div>
+      <GroupTabs />
       <Outlet context={data} />
     </section>
   )

@@ -1,7 +1,7 @@
 import type { ComponentProps } from 'react'
 import { Spinner } from './Spinner'
 
-type Variant = 'primary' | 'secondary' | 'ghost'
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger'
 
 interface ButtonProps extends ComponentProps<'button'> {
   variant?: Variant
@@ -13,6 +13,7 @@ const VARIANTS: Record<Variant, string> = {
   primary: 'bg-brand text-white hover:bg-brand-strong focus-visible:outline-brand',
   secondary: 'bg-white text-slate-900 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 focus-visible:outline-slate-500',
   ghost: 'text-slate-700 hover:bg-slate-100 focus-visible:outline-slate-500',
+  danger: 'bg-debt text-white hover:bg-rose-700 focus-visible:outline-debt',
 }
 
 export function Button({

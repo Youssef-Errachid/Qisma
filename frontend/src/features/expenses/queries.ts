@@ -1,0 +1,43 @@
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { reportKeys } from '@/features/reports/queries'
+import { type ExpenseFilters, toApiQuery } from './filters'
+import { deleteExpense, getExpense, listExpenses } from './expenseService'
+
+/** Everything about the expenses of a group is under expenseKeys.group(groupId): one call refreshes all of it. */
+export const expenseKeys = {
+  group: (groupId: string) => ['expenses', groupId] as const,
+  list: (groupId: string, filters: ExpenseFilters) => [...expenseKeys.group(groupId), 'list', toApiQuery(filters)] as const,
+  detail: (groupId: string, expenseId: string) => [...expenseKeys.group(groupId), 'detail', expenseId] as const,
+}
+
+export function useExpenses(groupId: string, filters: ExpenseFilters, enabled = true) {
+  return useQuery({
+    queryKey: expenseKeys.list(groupId, filters),
+    enabled,
+    queryFn: () => listExpenses(groupId, toApiQuery(filters)),
+    // while the next page or a new filter loads, keep showing the previous result instead of an empty screen
+    placeholderData: keepPreviousData,
+  })
+}
+
+export function useExpense(groupId: string, expenseId: string) {
+  return useQuery({ queryKey: expenseKeys.detail(groupId, expenseId), queryFn: () => getExpense(groupId, expenseId) })
+}
+
+/** What an expense changes: its own screens, and every figure and chart that adds expenses up. */
+export function useInvalidateMoney(groupId: string) {
+  const queryClient = useQueryClient()
+  return () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: expenseKeys.group(groupId) }),
+      queryClient.invalidateQueries({ queryKey: reportKeys.group(groupId) }),
+    ])
+}
+
+export function useDeleteExpense(groupId: string) {
+  const invalidate = useInvalidateMoney(groupId)
+  return useMutation({
+    mutationFn: (expenseId: string) => deleteExpense(groupId, expenseId),
+    onSuccess: () => invalidate(),
+  })
+}

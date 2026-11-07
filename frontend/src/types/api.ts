@@ -112,6 +112,77 @@ export interface ContributionsReport {
   members: MemberContribution[]
 }
 
+export const SPLIT_METHODS = ['EQUAL', 'CUSTOM', 'PERCENTAGE'] as const
+export type SplitMethod = (typeof SPLIT_METHODS)[number]
+
+export type ExpenseStatus = 'ACTIVE' | 'DELETED'
+export type MembershipStatus = 'ACTIVE' | 'INACTIVE'
+
+export interface PageResponse<T> {
+  items: T[]
+  /** zero-based */
+  page: number
+  size: number
+  totalElements: number
+  totalPages: number
+}
+
+export interface MemberResponse {
+  userId: string
+  username: string
+  fullName: string
+  role: GroupRole
+  status: MembershipStatus
+  joinedAt: string
+}
+
+export interface ExpenseShare {
+  userId: string
+  shareMinor: number
+  /** only for PERCENTAGE splits: 10000 = 100% */
+  percentageBp: number | null
+}
+
+export interface ExpenseResponse {
+  id: string
+  groupId: string
+  title: string
+  description: string | null
+  amountMinor: number
+  currency: string
+  paidBy: string
+  category: ExpenseCategory
+  splitMethod: SplitMethod
+  shares: ExpenseShare[]
+  /** yyyy-MM-dd */
+  expenseDate: string
+  status: ExpenseStatus
+  createdBy: string
+  createdAt: string
+  updatedAt: string
+  /** needed to edit: the server refuses a stale one */
+  version: number
+}
+
+export const ACTIVITY_ACTIONS = [
+  'EXPENSE_CREATED', 'EXPENSE_UPDATED', 'EXPENSE_DELETED',
+  'SETTLEMENT_CREATED', 'SETTLEMENT_CONFIRMED', 'SETTLEMENT_REJECTED', 'SETTLEMENT_CANCELLED',
+  'GROUP_UPDATED', 'GROUP_ARCHIVED', 'OWNERSHIP_TRANSFERRED', 'MEMBER_LEFT', 'MEMBER_DEACTIVATED',
+] as const
+export type ActivityAction = (typeof ACTIVITY_ACTIONS)[number]
+
+export interface ActivityLine {
+  id: string
+  action: ActivityAction
+  entityType: 'EXPENSE' | 'SETTLEMENT' | 'GROUP' | 'MEMBERSHIP'
+  entityId: string
+  actorId: string
+  actorUsername: string
+  createdAt: string
+  oldValue: Record<string, unknown> | null
+  newValue: Record<string, unknown> | null
+}
+
 export interface LoginRequest {
   email: string
   password: string

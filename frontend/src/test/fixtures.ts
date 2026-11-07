@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw'
-import type { CategoryReport, ContributionsReport, FieldError, GroupResponse, LoginResponse, MonthlyReport, ReportSummary, UserResponse } from '@/types/api'
+import type { ActivityLine, CategoryReport, ContributionsReport, ExpenseResponse, FieldError, GroupResponse, LoginResponse, MemberResponse, MonthlyReport, PageResponse, ReportSummary, UserResponse } from '@/types/api'
 import { server } from './server'
 
 export const API = '*/api/v1'
@@ -57,6 +57,59 @@ export function groupsAre(groups: GroupResponse[]) {
 export function groupIs(g: GroupResponse) {
   server.use(http.get(`${API}/groups/${g.id}`, () => HttpResponse.json(g)))
   reportsAre(g.id)
+}
+
+export function member(overrides: Partial<MemberResponse> = {}): MemberResponse {
+  return { userId: 'u-youssef', username: 'youssef', fullName: 'Youssef E.', role: 'OWNER', status: 'ACTIVE', joinedAt: '2026-11-01T10:00:00Z', ...overrides }
+}
+
+/** The three friends of the dev group. */
+export const FRIENDS: MemberResponse[] = [
+  member({ userId: 'u-youssef', username: 'youssef', fullName: 'Youssef E.', role: 'OWNER' }),
+  member({ userId: 'u-ahmed', username: 'ahmed', fullName: 'Ahmed B.', role: 'MEMBER' }),
+  member({ userId: 'u-hamza', username: 'hamza', fullName: 'Hamza K.', role: 'MEMBER' }),
+]
+
+export function membersAre(groupId: string, members: MemberResponse[] = FRIENDS) {
+  server.use(http.get(`${API}/groups/${groupId}/members`, () => HttpResponse.json(members)))
+}
+
+export function expense(overrides: Partial<ExpenseResponse> = {}): ExpenseResponse {
+  return {
+    id: 'e1',
+    groupId: 'g1',
+    title: 'Groceries',
+    description: null,
+    amountMinor: 30000,
+    currency: 'MAD',
+    paidBy: 'u-youssef',
+    category: 'FOOD',
+    splitMethod: 'EQUAL',
+    shares: [
+      { userId: 'u-youssef', shareMinor: 10000, percentageBp: null },
+      { userId: 'u-ahmed', shareMinor: 10000, percentageBp: null },
+      { userId: 'u-hamza', shareMinor: 10000, percentageBp: null },
+    ],
+    expenseDate: '2026-11-03',
+    status: 'ACTIVE',
+    createdBy: 'u-youssef',
+    createdAt: '2026-11-03T18:00:00Z',
+    updatedAt: '2026-11-03T18:00:00Z',
+    version: 0,
+    ...overrides,
+  }
+}
+
+export function pageOf<T>(items: T[], overrides: Partial<PageResponse<T>> = {}): PageResponse<T> {
+  return { items, page: 0, size: 20, totalElements: items.length, totalPages: items.length === 0 ? 0 : 1, ...overrides }
+}
+
+export function expensesAre(groupId: string, page: PageResponse<ExpenseResponse>) {
+  server.use(http.get(`${API}/groups/${groupId}/expenses`, () => HttpResponse.json(page)))
+}
+
+export function activityIs(groupId: string, lines: ActivityLine[]) {
+  server.use(http.get(`${API}/groups/${groupId}/activity`, () => HttpResponse.json(pageOf(lines))))
 }
 
 export const emptySummary: ReportSummary = {
