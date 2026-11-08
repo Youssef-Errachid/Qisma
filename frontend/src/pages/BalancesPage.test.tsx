@@ -158,10 +158,39 @@ describe('BalancesPage: how to settle up', () => {
     const items = await within(section).findAllByRole('listitem')
 
     expect(plain(items[0].textContent)).toContain('You')
-    expect(plain(items[0].textContent)).toContain('hamza')
+    expect(plain(items[0].textContent)).toContain('Hamza K.')
     expect(plain(items[0].textContent)).toContain('MAD 30.00')
     expect(within(items[1]).queryByRole('link')).not.toBeInTheDocument()
     expect(within(items[1]).queryByText('Waiting for them to pay you')).not.toBeInTheDocument()
+  })
+
+  it('names people the way the table above does (their full name), not by username', async () => {
+    setUp()
+    suggestionsAre('g1', [
+      { fromUserId: 'u-ahmed', fromUsername: 'ahmed', toUserId: 'u-hamza', toUsername: 'hamza', amountMinor: 500 },
+    ])
+    renderApp('/groups/g1/balances')
+
+    const section = (await screen.findByRole('heading', { name: 'How to settle up' })).closest('section') as HTMLElement
+    const [item] = await within(section).findAllByRole('listitem')
+
+    expect(plain(item.textContent)).toContain('Ahmed B.')
+    expect(plain(item.textContent)).toContain('Hamza K.')
+    expect(plain(item.textContent)).not.toContain('ahmed')
+  })
+
+  it('falls back to the username for someone the balances do not list', async () => {
+    setUp()
+    suggestionsAre('g1', [
+      { fromUserId: 'u-ghost', fromUsername: 'ghost', toUserId: 'u-hamza', toUsername: 'hamza', amountMinor: 500 },
+    ])
+    renderApp('/groups/g1/balances')
+
+    const section = (await screen.findByRole('heading', { name: 'How to settle up' })).closest('section') as HTMLElement
+    const [item] = await within(section).findAllByRole('listitem')
+
+    expect(plain(item.textContent)).toContain('ghost')
+    expect(plain(item.textContent)).toContain('Hamza K.')
   })
 
   it('says everyone is settled up when nothing is owed', async () => {

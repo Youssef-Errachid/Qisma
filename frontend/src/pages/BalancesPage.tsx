@@ -89,6 +89,10 @@ export function BalancesPage() {
   const suggestions = useSuggestions(group.id)
   const pending = usePendingSettlements(group.id)
 
+  // the suggestions name people by username; everywhere else they have their full name, so use it here too
+  const fullNames = new Map((balances.data?.members ?? []).map((m) => [m.userId, m.fullName || m.username]))
+  const nameOf = (id: string, username: string) => fullNames.get(id) ?? username
+
   const waitingForMe = pending.data?.items.filter((s) => s.toUserId === user?.id).length ?? 0
   const base = `/groups/${encodeURIComponent(group.id)}/settlements`
 
@@ -131,9 +135,9 @@ export function BalancesPage() {
                   return (
                     <li key={`${transfer.fromUserId}-${transfer.toUserId}`} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
                       <p className="text-sm text-slate-800">
-                        <span className="font-medium">{mine ? t('settlements.you') : transfer.fromUsername}</span> <span aria-hidden="true">→</span>
+                        <span className="font-medium">{mine ? t('settlements.you') : nameOf(transfer.fromUserId, transfer.fromUsername)}</span> <span aria-hidden="true">→</span>
                         <span className="sr-only"> {t('settlements.to')} </span>{' '}
-                        <span className="font-medium">{forMe ? t('settlements.you') : transfer.toUsername}</span>
+                        <span className="font-medium">{forMe ? t('settlements.you') : nameOf(transfer.toUserId, transfer.toUsername)}</span>
                         {': '}<Money minor={transfer.amountMinor} currency={data.currency} className="font-semibold" />
                       </p>
                       {mine && group.status === 'ACTIVE' && (
