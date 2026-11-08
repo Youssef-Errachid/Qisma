@@ -31,11 +31,13 @@ export function GroupDashboardPage() {
   const contributions = useContributions(group.id, range)
   const money = (minor: number) => tooltipAmount(minor, group.currency, language)
 
+  // the figures sit in two columns even on a phone: six cards in one column put the charts a long scroll away
+
   return (
     <div className="space-y-8 pt-6">
       <QueryBoundary query={summary}>
         {(s) => (
-          <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <dl className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
             <StatCard label={t('dashboard.stats.total')}>
               <Money minor={s.totalExpensesMinor} currency={s.currency} />
             </StatCard>
