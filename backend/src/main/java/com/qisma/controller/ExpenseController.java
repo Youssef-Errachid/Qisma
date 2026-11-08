@@ -24,10 +24,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 import java.time.LocalDate;
 
 /** The caller's identity always comes from the verified token. */
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/api/v1/groups/{groupId}/expenses")
 public class ExpenseController {
