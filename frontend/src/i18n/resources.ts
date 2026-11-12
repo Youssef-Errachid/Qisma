@@ -51,6 +51,8 @@ const en = {
     },
     role: { OWNER: 'Owner', MEMBER: 'Member' },
     status: { ACTIVE: 'Active', ARCHIVED: 'Archived' },
+    tabs: { active: 'Active', archived: 'Archived' },
+    view: 'View group',
     create: {
       title: 'New group',
       subtitle: 'A group is where you and the people you share costs with keep the accounts.',
@@ -470,6 +472,8 @@ const fr: Dictionary = {
     },
     role: { OWNER: 'Propriétaire', MEMBER: 'Membre' },
     status: { ACTIVE: 'Actif', ARCHIVED: 'Archivé' },
+    tabs: { active: 'Actifs', archived: 'Archivés' },
+    view: 'Voir le groupe',
     create: {
       title: 'Nouveau groupe',
       subtitle: "Un groupe, c'est l'endroit où vous et ceux avec qui vous partagez les frais tenez les comptes.",
@@ -887,6 +891,8 @@ const ar: Dictionary = {
     },
     role: { OWNER: 'المالك', MEMBER: 'عضو' },
     status: { ACTIVE: 'نشطة', ARCHIVED: 'مؤرشفة' },
+    tabs: { active: 'نشطة', archived: 'مؤرشفة' },
+    view: 'عرض المجموعة',
     create: {
       title: 'مجموعة جديدة',
       subtitle: 'المجموعة هي المكان الذي تحفظ فيه أنت ومن تتقاسم معهم التكاليف حساباتكم.',

@@ -12,7 +12,9 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <RouterProvider router={router} />
+        <div data-theme="light" className="q-root">
+          <RouterProvider router={router} />
+        </div>
       </AuthProvider>
     </QueryClientProvider>
   )
