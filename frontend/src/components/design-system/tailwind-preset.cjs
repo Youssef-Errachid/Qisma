@@ -1,0 +1,56 @@
+// QISMA Tailwind v3 preset. In tailwind.config.js: presets: [require('./design-system/tailwind-preset.cjs')]
+module.exports = {
+  darkMode: ['class', '[data-theme="dark"]'],
+  theme: {
+    extend: {
+      colors: {
+        'brand-900': 'var(--brand-900)',
+        'brand-700': 'var(--brand-700)',
+        'sidebar-hover': 'var(--sidebar-hover)',
+        'sidebar-ink': 'var(--sidebar-ink)',
+        'sidebar-ink-muted': 'var(--sidebar-ink-muted)',
+        'brand-600': 'var(--brand-600)',
+        'brand-600-hover': 'var(--brand-600-hover)',
+        'brand-600-active': 'var(--brand-600-active)',
+        'on-brand': 'var(--on-brand)',
+        'brand-100': 'var(--brand-100)',
+        'brand-50': 'var(--brand-50)',
+        'bg': 'var(--bg)',
+        'surface': 'var(--surface)',
+        'surface-hover': 'var(--surface-hover)',
+        'surface-sunken': 'var(--surface-sunken)',
+        'border': 'var(--border)',
+        'border-hover': 'var(--border-hover)',
+        'border-control': 'var(--border-control)',
+        'ink': 'var(--ink)',
+        'ink-muted': 'var(--ink-muted)',
+        'owed': 'var(--owed)',
+        'owed-soft': 'var(--owed-soft)',
+        'owe': 'var(--owe)',
+        'owe-soft': 'var(--owe-soft)',
+        'owe-accent': 'var(--owe-accent)',
+        'pending': 'var(--pending)',
+        'pending-soft': 'var(--pending-soft)',
+        'danger': 'var(--danger)',
+        'danger-soft': 'var(--danger-soft)',
+        'focus-ring': 'var(--focus-ring)',
+        'chart-green': 'var(--chart-green)',
+        'chart-mint': 'var(--chart-mint)',
+        'chart-amber': 'var(--chart-amber)',
+        'chart-purple': 'var(--chart-purple)',
+        'chart-grey': 'var(--chart-grey)',
+        'scrollbar-thumb': 'var(--scrollbar-thumb)',
+        'scrollbar-thumb-hover': 'var(--scrollbar-thumb-hover)',
+        'accent-green': 'var(--accent-green)',
+        'accent-orange': 'var(--accent-orange)',
+        'accent-purple': 'var(--accent-purple)',
+        'banner': 'var(--banner)'
+      },
+      fontFamily: { sans: ['var(--font-sans)'], display: ['var(--font-display)'] },
+      borderRadius: { sm: 'var(--radius-sm)', md: 'var(--radius-md)', lg: 'var(--radius-lg)', pill: 'var(--radius-pill)' },
+      boxShadow: { card: 'var(--shadow-card)', hover: 'var(--shadow-hover)', sticky: 'var(--shadow-sticky)' },
+      transitionDuration: { fast: '120ms', base: '200ms', slow: '320ms' },
+      transitionTimingFunction: { standard: 'cubic-bezier(0.2, 0, 0, 1)', 'out-soft': 'cubic-bezier(0.16, 1, 0.3, 1)' }
+    }
+  }
+};
