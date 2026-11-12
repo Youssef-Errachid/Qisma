@@ -34,7 +34,6 @@ import {
 
 import { useGroupContext } from '@/features/groups/useGroupContext'
 
-// Charts are loaded only when the dashboard is opened.
 const MonthlyChart = lazy(
     () => import('@/features/reports/charts/MonthlyChart'),
 )
@@ -68,7 +67,6 @@ export function GroupDashboardPage() {
   const money = (minor: number) =>
       tooltipAmount(minor, group.currency, language)
 
-  // Animate the dashboard when it mounts and when the report period changes.
   useEffect(() => {
     const root = dashboardRef.current
     if (!root) return
@@ -109,38 +107,48 @@ export function GroupDashboardPage() {
       <div ref={dashboardRef} className="dashboard-page space-y-8 pb-10 pt-6">
 
         {/* Dashboard heading */}
-        <header className="dashboard-header relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-950 via-emerald-900 to-teal-800 px-6 py-8 text-white shadow-xl sm:px-8 sm:py-10">
+        <header
+            className="dashboard-header relative overflow-hidden rounded-2xl px-6 py-8 text-white shadow-xl sm:px-8 sm:py-10"
+            style={{ background: 'var(--brand-900)' }}
+        >
           <div
               aria-hidden="true"
-              className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full bg-emerald-400/10 blur-3xl"
+              className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full blur-3xl"
+              style={{ background: 'rgba(255,255,255,0.05)' }}
           />
-
           <div
               aria-hidden="true"
-              className="pointer-events-none absolute -bottom-32 right-1/3 h-64 w-64 rounded-full bg-teal-300/10 blur-3xl"
+              className="pointer-events-none absolute -bottom-32 right-1/3 h-64 w-64 rounded-full blur-3xl"
+              style={{ background: 'rgba(255,255,255,0.04)' }}
           />
 
           <div className="relative z-10 flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
             <div>
               <div className="mb-3 flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-emerald-300 shadow-[0_0_12px_rgba(110,231,183,0.9)]" />
-                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-200">
-                {group.status === 'ACTIVE' ? 'Group overview' : 'Archived group'}
-              </span>
+                <span className="h-2 w-2 rounded-full" style={{ background: 'var(--sidebar-ink)', boxShadow: '0 0 10px rgba(228,239,232,0.6)' }} />
+                <span className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: 'var(--sidebar-ink-muted)' }}>
+                  {group.status === 'ACTIVE' ? 'Group overview' : 'Archived group'}
+                </span>
               </div>
 
-              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl" style={{ color: 'var(--sidebar-ink)' }}>
                 {group.name}
               </h1>
 
-              <p className="mt-2 max-w-xl text-sm leading-6 text-emerald-100/80 sm:text-base">
+              <p className="mt-2 max-w-xl text-sm leading-6 sm:text-base" style={{ color: 'var(--sidebar-ink-muted)' }}>
                 Track shared expenses, understand spending, and keep everyone's
                 contributions organized.
               </p>
             </div>
 
-            <div className="flex w-fit items-center gap-3 rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur-md">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-300/15 text-emerald-200">
+            <div
+                className="flex w-fit items-center gap-3 rounded-2xl px-4 py-3"
+                style={{ border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)' }}
+            >
+              <div
+                  className="flex h-10 w-10 items-center justify-center rounded-xl"
+                  style={{ background: 'rgba(228,239,232,0.15)', color: 'var(--sidebar-ink)' }}
+              >
                 <svg
                     viewBox="0 0 24 24"
                     fill="none"
@@ -155,10 +163,10 @@ export function GroupDashboardPage() {
               </div>
 
               <div>
-                <p className="text-xs text-emerald-100/70">
+                <p className="text-xs" style={{ color: 'var(--sidebar-ink-muted)' }}>
                   Reporting currency
                 </p>
-                <p className="font-semibold tracking-wide">
+                <p className="font-semibold tracking-wide" style={{ color: 'var(--sidebar-ink)' }}>
                   {group.currency}
                 </p>
               </div>
@@ -170,10 +178,10 @@ export function GroupDashboardPage() {
         <section aria-label="Group statistics">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
-              <h2 className="text-lg font-bold tracking-tight text-slate-900">
+              <h2 className="text-lg font-bold tracking-tight" style={{ color: 'var(--ink)' }}>
                 Financial overview
               </h2>
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-1 text-sm" style={{ color: 'var(--ink-muted)' }}>
                 A snapshot of your group's finances.
               </p>
             </div>
@@ -184,21 +192,17 @@ export function GroupDashboardPage() {
                 <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
 
                   <div className="dashboard-stat">
-                    <StatCard label={t('dashboard.stats.total')}>
-                      <div className="text-slate-950">
-                        <Money
-                            minor={s.totalExpensesMinor}
-                            currency={s.currency}
-                        />
-                      </div>
+                    <StatCard label={t('dashboard.stats.total')} tone="mint">
+                      <Money
+                          minor={s.totalExpensesMinor}
+                          currency={s.currency}
+                      />
                     </StatCard>
                   </div>
 
                   <div className="dashboard-stat">
                     <StatCard label={t('dashboard.stats.count')}>
-                  <span className="text-slate-950">
-                    {s.expenseCount}
-                  </span>
+                      <span>{s.expenseCount}</span>
                     </StatCard>
                   </div>
 
@@ -209,9 +213,7 @@ export function GroupDashboardPage() {
                           active: s.activeMemberCount,
                         })}
                     >
-                  <span className="text-slate-950">
-                    {s.memberCount}
-                  </span>
+                      <span>{s.memberCount}</span>
                     </StatCard>
                   </div>
 
@@ -219,14 +221,15 @@ export function GroupDashboardPage() {
                     <StatCard
                         label={t('dashboard.stats.debts')}
                         hint={t('dashboard.stats.debtsHint')}
+                        tone="peach"
                     >
-                  <span className="font-semibold text-debt">
-                    <Money
-                        minor={s.outstandingDebtsMinor}
-                        currency={s.currency}
-                        tone="debt"
-                    />
-                  </span>
+                      <span style={{ color: 'var(--owe)' }}>
+                        <Money
+                            minor={s.outstandingDebtsMinor}
+                            currency={s.currency}
+                            tone="debt"
+                        />
+                      </span>
                     </StatCard>
                   </div>
 
@@ -235,13 +238,13 @@ export function GroupDashboardPage() {
                         label={t('dashboard.stats.settled')}
                         hint={t('dashboard.stats.settledHint')}
                     >
-                  <span className="font-semibold text-credit">
-                    <Money
-                        minor={s.confirmedSettlementsMinor}
-                        currency={s.currency}
-                        tone="credit"
-                    />
-                  </span>
+                      <span style={{ color: 'var(--owed)' }}>
+                        <Money
+                            minor={s.confirmedSettlementsMinor}
+                            currency={s.currency}
+                            tone="credit"
+                        />
+                      </span>
                     </StatCard>
                   </div>
 
@@ -252,12 +255,10 @@ export function GroupDashboardPage() {
                           count: s.pendingSettlementsCount,
                         })}
                     >
-                  <span className="text-slate-950">
-                    <Money
-                        minor={s.pendingSettlementsMinor}
-                        currency={s.currency}
-                    />
-                  </span>
+                      <Money
+                          minor={s.pendingSettlementsMinor}
+                          currency={s.currency}
+                      />
                     </StatCard>
                   </div>
 
@@ -268,7 +269,7 @@ export function GroupDashboardPage() {
 
         {/* Reports */}
         {summary.isSuccess && summary.data.expenseCount === 0 ? (
-            <div className="dashboard-panel rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="dashboard-panel q-card">
               <EmptyState
                   title={t('dashboard.empty.title')}
               >
@@ -278,12 +279,12 @@ export function GroupDashboardPage() {
         ) : (
             <>
               {/* Period filter */}
-              <section className="dashboard-panel flex flex-col justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center">
+              <section className="dashboard-panel q-card flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                 <div>
-                  <h2 className="font-semibold text-slate-900">
+                  <h2 className="font-semibold" style={{ color: 'var(--ink)' }}>
                     Spending analytics
                   </h2>
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className="mt-1 text-sm" style={{ color: 'var(--ink-muted)' }}>
                     Explore how your group spends over time.
                   </p>
                 </div>
@@ -371,7 +372,7 @@ export function GroupDashboardPage() {
                               ])}
                           >
                             {data.length === 0 ? (
-                                <p className="py-10 text-center text-sm text-slate-500">
+                                <p className="py-10 text-center text-sm" style={{ color: 'var(--ink-muted)' }}>
                                   {t('dashboard.noData')}
                                 </p>
                             ) : (
